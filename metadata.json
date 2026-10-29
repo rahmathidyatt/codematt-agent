@@ -1,0 +1,7 @@
+{
+  "name": "Codematt Agent",
+  "description": "AI Workspace for Real Estate Agents - prepare property listings, client follow-up sequences, and high-resolution print flyers",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
