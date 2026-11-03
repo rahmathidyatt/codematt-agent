@@ -1,6 +1,6 @@
 {
   "name": "Codematt Agent",
-  "description": "AI Workspace for Real Estate Agents - prepare property listings, client follow-up sequences, and high-resolution print flyers",
+  "description": "Minimalist multi-model AI agent workspace and commercial gateway integrating ChatGPT, Gemini, Claude, DeepSeek, and Llama under one personal master account.",
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

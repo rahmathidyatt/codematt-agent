@@ -1,495 +1,1278 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState, useRef } from "react";
 import {
-  FileText,
-  Palette,
-  MessageSquare,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
+  Send,
+  RotateCcw,
   Check,
-  Building2,
+  Copy,
+  SlidersHorizontal,
+  Columns2,
+  ArrowRight,
+  Coffee,
+  Heart,
+  Sparkles,
+  BarChart3,
+  Settings,
   Layers,
-  Milestone,
-  Home,
-  QrCode,
-  Download,
-  Users,
+  MessageSquare,
+  X,
 } from "lucide-react";
-import { Roadmap } from "@/components/Roadmap";
-import { useAgentStore } from "@/lib/store";
+import {
+  INITIAL_MODELS,
+  AGENT_PERSONAS,
+  INITIAL_CLIENT_KEYS,
+  AIModelConfig,
+  ChatTurn,
+  ClientApiKey,
+  calculateTokenEconomics,
+} from "@/features/platform/model-gateway";
+import { SessionTelemetryDashboard } from "@/components/platform/SessionTelemetryDashboard";
+import { ModelRegistryPanel } from "@/components/platform/ModelRegistryPanel";
+import { CommercialHubPanel } from "@/components/platform/CommercialHubPanel";
 
-export default function LandingPage() {
-  const { listings, agent, locale } = useAgentStore();
-  const [activeDemoTab, setActiveDemoTab] = useState<"writer" | "flyer" | "whatsapp">("writer");
+const OWNER_EMAIL = "amathmrs02@gmail.com";
 
-  const sample = listings[0];
+type ActiveTabView = "models" | "workspace" | "telemetry" | "owner";
+
+interface CoffeeTier {
+  id: string;
+  cups: number;
+  title: string;
+  amountIdr: string;
+  caption: string;
+}
+
+const COFFEE_TIERS: CoffeeTier[] = [
+  {
+    id: "coffee-1",
+    cups: 1,
+    title: "1 Gelas Espresso",
+    amountIdr: "Rp 25.000",
+    caption: "Suntikan semangat koding malam",
+  },
+  {
+    id: "coffee-3",
+    cups: 3,
+    title: "3 Gelas Golden Latte",
+    amountIdr: "Rp 75.000",
+    caption: "Bantu biaya eksperimen model AI baru",
+  },
+  {
+    id: "coffee-5",
+    cups: 5,
+    title: "5 Gelas Cold Brew",
+    amountIdr: "Rp 125.000",
+    caption: "Pendukung utama pengembangan platform",
+  },
+];
+
+export default function MultiModelAgentPlatformPage() {
+  const [models, setModels] = useState<AIModelConfig[]>(INITIAL_MODELS);
+  const [selectedModelId, setSelectedModelId] = useState<string>("gemini-3.8-flash");
+  const [activeView, setActiveView] = useState<ActiveTabView>("models");
+
+  const [compareMode, setCompareMode] = useState<boolean>(false);
+  const [compareModelId, setCompareModelId] = useState<string>("chatgpt-4o");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>(AGENT_PERSONAS[0].id);
+  const [customSystemPrompt, setCustomSystemPrompt] = useState<string>("");
+  const [showAgentConfig, setShowAgentConfig] = useState<boolean>(false);
+
+  const [promptInput, setPromptInput] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [copiedTurnId, setCopiedTurnId] = useState<string | null>(null);
+
+  const [clientKeys, setClientKeys] = useState<ClientApiKey[]>(INITIAL_CLIENT_KEYS);
+
+  // "Buy a Coffee" Bottom Sub-Menu state
+  const [showCoffeeMenu, setShowCoffeeMenu] = useState<boolean>(false);
+  const [selectedCoffeeId, setSelectedCoffeeId] = useState<string>("coffee-3");
+  const [supporterName, setSupporterName] = useState<string>("");
+  const [supporterMessage, setSupporterMessage] = useState<string>("");
+  const [coffeeCount, setCoffeeCount] = useState<number>(48);
+  const [coffeeThankYou, setCoffeeThankYou] = useState<string | null>(null);
+
+  const promptInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [turns, setTurns] = useState<ChatTurn[]>([
+    {
+      id: "turn-welcome",
+      role: "assistant",
+      content:
+        "### Halo! Agen AI Siap Membantu Anda\n\nAnda sedang berada di tab ruang kerja aktif. Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B**.\n- **Fokus & Minimalis**: Seluruh detail teknis yang tidak relevan dengan agen telah disembunyikan agar Anda bisa fokus penuh pada pekerjaan.",
+      modelId: "gemini-3.8-flash",
+      modelName: "Gemini 3.8 Flash",
+      provider: "Google DeepMind",
+      agentId: "agent-orchestrator",
+      timestamp: "Baru saja",
+      tokensUsed: 142,
+      wholesaleCostUsd: 0.00008,
+      retailChargeUsd: 0.0002,
+      latencyMs: 380,
+    },
+  ]);
+
+  const [telemetryProbes, setTelemetryProbes] = useState<ChatTurn[]>([
+    {
+      id: "probe-gemini",
+      role: "assistant",
+      content: "Kalibrasi awal sesi",
+      modelId: "gemini-3.8-flash",
+      modelName: "Gemini 3.8 Flash",
+      provider: "Google DeepMind",
+      agentId: "agent-orchestrator",
+      timestamp: "Awal sesi",
+      tokensUsed: 1480,
+      wholesaleCostUsd: 0.00041,
+      retailChargeUsd: 0.001025,
+      latencyMs: 375,
+    },
+    {
+      id: "probe-gpt4o",
+      role: "assistant",
+      content: "Kalibrasi awal sesi",
+      modelId: "chatgpt-4o",
+      modelName: "ChatGPT (GPT-4o)",
+      provider: "OpenAI",
+      agentId: "agent-orchestrator",
+      timestamp: "Awal sesi",
+      tokensUsed: 1120,
+      wholesaleCostUsd: 0.00728,
+      retailChargeUsd: 0.016016,
+      latencyMs: 595,
+    },
+    {
+      id: "probe-claude",
+      role: "assistant",
+      content: "Kalibrasi awal sesi",
+      modelId: "claude-3-7-sonnet",
+      modelName: "Claude 3.7 Sonnet",
+      provider: "Anthropic",
+      agentId: "agent-architect",
+      timestamp: "Awal sesi",
+      tokensUsed: 940,
+      wholesaleCostUsd: 0.00846,
+      retailChargeUsd: 0.01692,
+      latencyMs: 725,
+    },
+    {
+      id: "probe-deepseek",
+      role: "assistant",
+      content: "Kalibrasi awal sesi",
+      modelId: "deepseek-r1",
+      modelName: "DeepSeek R1",
+      provider: "DeepSeek",
+      agentId: "agent-analyst",
+      timestamp: "Awal sesi",
+      tokensUsed: 860,
+      wholesaleCostUsd: 0.00118,
+      retailChargeUsd: 0.003304,
+      latencyMs: 805,
+    },
+    {
+      id: "probe-llama",
+      role: "assistant",
+      content: "Kalibrasi awal sesi",
+      modelId: "llama-3-3-70b",
+      modelName: "Llama 3.3 70B Instruct",
+      provider: "Meta Open-Weights",
+      agentId: "agent-orchestrator",
+      timestamp: "Awal sesi",
+      tokensUsed: 640,
+      wholesaleCostUsd: 0.00044,
+      retailChargeUsd: 0.00132,
+      latencyMs: 280,
+    },
+  ]);
+
+  const enabledModels = models.filter((m) => m.enabled);
+  const activeModel =
+    models.find((m) => m.id === selectedModelId) || enabledModels[0] || models[0];
+  const secondaryModel =
+    models.find((m) => m.id === compareModelId) ||
+    enabledModels.find((m) => m.id !== activeModel.id) ||
+    models[1];
+  const activePersona =
+    AGENT_PERSONAS.find((a) => a.id === selectedAgentId) || AGENT_PERSONAS[0];
+
+  const sessionTelemetryTurns = [...telemetryProbes, ...turns];
+
+  const sessionTokens = sessionTelemetryTurns.reduce((acc, t) => acc + t.tokensUsed, 0);
+  const sessionWholesaleUsd = sessionTelemetryTurns.reduce(
+    (acc, t) => acc + t.wholesaleCostUsd,
+    0
+  );
+  const sessionRetailUsd = sessionTelemetryTurns.reduce(
+    (acc, t) => acc + t.retailChargeUsd,
+    0
+  );
+
+  // Selecting a model automatically opens its active workspace tab and focuses the input
+  const handleSelectModelAndLaunch = (modelId: string) => {
+    setSelectedModelId(modelId);
+    setActiveView("workspace");
+    setTimeout(() => {
+      promptInputRef.current?.focus();
+    }, 60);
+  };
+
+  const handleRunPrompt = async (overridePrompt?: string) => {
+    const textToSend = (overridePrompt ?? promptInput).trim();
+    if (!textToSend || loading) return;
+
+    const userTurn: ChatTurn = {
+      id: `usr-${Date.now()}`,
+      role: "user",
+      content: textToSend,
+      modelId: activeModel.id,
+      modelName: activeModel.name,
+      provider: activeModel.provider,
+      agentId: activePersona.id,
+      timestamp: new Date().toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      tokensUsed: 0,
+      wholesaleCostUsd: 0,
+      retailChargeUsd: 0,
+      latencyMs: 0,
+    };
+
+    setTurns((prev) => [...prev, userTurn]);
+    setPromptInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/gateway", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: textToSend,
+          modelId: activeModel.id,
+          compareModelId: compareMode ? secondaryModel.id : null,
+          agentId: activePersona.id,
+          customSystemPrompt: customSystemPrompt || undefined,
+        }),
+      });
+
+      const json = await res.json();
+      if (json.ok && json.primary) {
+        const p = json.primary;
+        const c = json.comparison;
+
+        const assistantTurn: ChatTurn = {
+          id: `ai-${Date.now()}`,
+          role: "assistant",
+          content: p.content,
+          modelId: p.modelId,
+          modelName: p.modelName,
+          provider: p.provider,
+          agentId: activePersona.id,
+          timestamp: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          tokensUsed: p.tokensUsed + (c ? c.tokensUsed : 0),
+          wholesaleCostUsd: p.wholesaleCostUsd + (c ? c.wholesaleCostUsd : 0),
+          retailChargeUsd: p.retailChargeUsd + (c ? c.retailChargeUsd : 0),
+          latencyMs: p.latencyMs,
+          comparisonResponses: c
+            ? [
+                {
+                  modelId: p.modelId,
+                  modelName: p.modelName,
+                  provider: p.provider,
+                  content: p.content,
+                  tokensUsed: p.tokensUsed,
+                  latencyMs: p.latencyMs,
+                  retailChargeUsd: p.retailChargeUsd,
+                },
+                {
+                  modelId: c.modelId,
+                  modelName: c.modelName,
+                  provider: c.provider,
+                  content: c.content,
+                  tokensUsed: c.tokensUsed,
+                  latencyMs: c.latencyMs,
+                  retailChargeUsd: c.retailChargeUsd,
+                },
+              ]
+            : undefined,
+        };
+
+        setTurns((prev) => [...prev, assistantTurn]);
+      }
+    } catch (err) {
+      console.error("Gagal menjalankan permintaan model:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSession = () => {
+    setTelemetryProbes([]);
+    setTurns([
+      {
+        id: `turn-reset-${Date.now()}`,
+        role: "assistant",
+        content: `### Sesi Baru Dimulai · ${activeModel.name}\n\nSiap menerima instruksi Anda melalui peran **${activePersona.name}**. Silakan ketik pesan di bawah.`,
+        modelId: activeModel.id,
+        modelName: activeModel.name,
+        provider: activeModel.provider,
+        agentId: activePersona.id,
+        timestamp: "Baru saja",
+        tokensUsed: 64,
+        wholesaleCostUsd: 0.00003,
+        retailChargeUsd: 0.00008,
+        latencyMs: 210,
+      },
+    ]);
+  };
+
+  const handleRunBenchmarkSweep = () => {
+    const nowTime = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const sweepTurns: ChatTurn[] = enabledModels.map((model, index) => {
+      const inputTokens = 210 + index * 45;
+      const outputTokens = 380 + index * 70;
+      const econ = calculateTokenEconomics(model, inputTokens, outputTokens);
+      const jitter = (index % 2 === 0 ? -1 : 1) * (16 + index * 8);
+      const latencyMs = Math.max(175, model.avgLatencyMs + jitter);
+
+      return {
+        id: `bench-${Date.now()}-${model.id}`,
+        role: "assistant",
+        content: `Uji performa (${model.name})`,
+        modelId: model.id,
+        modelName: model.name,
+        provider: model.provider,
+        agentId: activePersona.id,
+        timestamp: nowTime,
+        tokensUsed: econ.totalTokens,
+        wholesaleCostUsd: econ.wholesaleCostUsd,
+        retailChargeUsd: econ.retailChargeUsd,
+        latencyMs,
+      };
+    });
+
+    setTelemetryProbes((prev) => [...prev, ...sweepTurns]);
+  };
+
+  const handleCopyTurn = (id: string, text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedTurnId(id);
+      setTimeout(() => setCopiedTurnId(null), 1800);
+    }
+  };
+
+  const handleToggleModelEnabled = (id: string) => {
+    setModels((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
+    );
+  };
+
+  const handleUpdateMultiplier = (id: string, multiplier: number) => {
+    setModels((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, retailMarkupMultiplier: multiplier } : m
+      )
+    );
+  };
+
+  const handleAddCustomModel = (newModel: AIModelConfig) => {
+    setModels((prev) => [...prev, newModel]);
+    handleSelectModelAndLaunch(newModel.id);
+  };
+
+  const handleCreateClientKey = (
+    label: string,
+    tier: ClientApiKey["tier"],
+    quotaUsd: number
+  ) => {
+    const suffix = Math.random().toString(16).substring(2, 6);
+    const created: ClientApiKey = {
+      id: `key-${Date.now()}`,
+      label,
+      keyPreview: `sk-cm_live_${suffix}...9f01`,
+      tier,
+      monthlyQuotaUsd: quotaUsd,
+      usedUsd: 0,
+      createdAt: "2026-11-03",
+      active: true,
+    };
+    setClientKeys((prev) => [created, ...prev]);
+  };
+
+  const handleToggleKeyStatus = (id: string) => {
+    setClientKeys((prev) =>
+      prev.map((k) => (k.id === id ? { ...k, active: !k.active } : k))
+    );
+  };
+
+  const handleRevokeKey = (id: string) => {
+    setClientKeys((prev) => prev.filter((k) => k.id !== id));
+  };
+
+  const handleSendCoffeeSupport = (e: React.FormEvent) => {
+    e.preventDefault();
+    const chosen =
+      COFFEE_TIERS.find((c) => c.id === selectedCoffeeId) || COFFEE_TIERS[1];
+    const sender = supporterName.trim() || "Sahabat AI";
+    setCoffeeCount((prev) => prev + chosen.cups);
+    setCoffeeThankYou(
+      `Terima kasih banyak, ${sender}! Dukungan ${chosen.title} (${chosen.amountIdr}) berhasil dicatat untuk pengembangan Codematt Agent.`
+    );
+    setSupporterName("");
+    setSupporterMessage("");
+  };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col">
-      {/* Top Bar (Follows Top Bar Contract: Brand — 4-5 Links — 1 Primary Action) */}
-      <header className="border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-8">
+    <div className="min-h-screen bg-white text-[#111113] flex flex-col justify-between">
+      {/* Strict 3-Zone Minimalist Top Bar */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-[#e4e4e7]">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
           {/* Zone 1: Brand Wordmark */}
-          <Link href="/" className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
-            <span className="w-8 h-8 rounded-lg bg-[var(--accent)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              c.
-            </span>
-            <span className="text-base font-bold tracking-tight">
-              codematt <span className="text-[var(--accent)]">agent</span>
-            </span>
-          </Link>
+          <button
+            type="button"
+            onClick={() => setActiveView("models")}
+            className="text-lg font-bold tracking-tight text-[#111113] whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            Codematt Agent
+          </button>
 
-          {/* Zone 2: Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[var(--muted)]">
-            <a href="#fitur" className="hover:text-[var(--text)] transition-colors whitespace-nowrap">
-              Fitur Utama
-            </a>
-            <Link href="/listing" className="hover:text-[var(--text)] transition-colors whitespace-nowrap">
-              Listing Writer
-            </Link>
-            <Link href="/flyer" className="hover:text-[var(--text)] transition-colors whitespace-nowrap">
-              Flyer Studio
-            </Link>
-            <a href="#pricing" className="hover:text-[var(--text)] transition-colors whitespace-nowrap">
-              Paket Harga
-            </a>
-            <a href="#roadmap" className="hover:text-[var(--text)] transition-colors whitespace-nowrap">
-              Roadmap (Phase 0–10)
-            </a>
+          {/* Zone 2: Minimalist Tab Navigation (4 single-line links) */}
+          <nav
+            aria-label="Navigasi Utama"
+            className="hidden md:flex items-center gap-6 text-sm font-medium text-[#52525b]"
+          >
+            <button
+              type="button"
+              data-testid="nav-tab-models"
+              onClick={() => setActiveView("models")}
+              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeView === "models"
+                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
+                  : "hover:text-[#111113]"
+              }`}
+            >
+              Pilih Model
+            </button>
+            <button
+              type="button"
+              data-testid="nav-tab-workspace"
+              onClick={() => setActiveView("workspace")}
+              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeView === "workspace"
+                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
+                  : "hover:text-[#111113]"
+              }`}
+            >
+              Ruang Kerja ({activeModel.name})
+            </button>
+            <button
+              type="button"
+              data-testid="nav-tab-telemetry"
+              onClick={() => setActiveView("telemetry")}
+              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeView === "telemetry"
+                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
+                  : "hover:text-[#111113]"
+              }`}
+            >
+              Statistik Sesi
+            </button>
+            <button
+              type="button"
+              data-testid="nav-tab-owner"
+              onClick={() => setActiveView("owner")}
+              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeView === "owner"
+                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
+                  : "hover:text-[#111113]"
+              }`}
+            >
+              Pengaturan Owner
+            </button>
           </nav>
 
-          {/* Zone 3: Primary Action */}
+          {/* Zone 3: Single Primary Action */}
           <div className="flex items-center gap-3 shrink-0">
-            <Link
-              href="/login"
-              className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] px-3 py-2 transition-colors hidden sm:block"
+            <button
+              type="button"
+              onClick={handleResetSession}
+              className="px-4 py-2 text-xs font-semibold text-[#111113] bg-[#f5b800] hover:bg-[#e5ac00] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              Masuk
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-xs font-bold text-white bg-[var(--accent)] rounded-xl hover:opacity-95 shadow-xs transition-opacity whitespace-nowrap"
-            >
-              Buka Workspace
-            </Link>
+              Sesi Baru
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-16 pb-12 sm:pt-24 sm:pb-20 border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--accent)] font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Workspace Khusus Agen Properti Indonesia</span>
-            <span aria-hidden="true">·</span>
-            <span className="text-[var(--muted)]">Phase 0 Shipped · Phase 1 Live</span>
-          </div>
+      {/* Main Focused Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
+        {/* VIEW 1: PILIH MODEL AI (DEFAULT MINIMALIST LANDING) */}
+        {activeView === "models" && (
+          <section
+            id="models"
+            aria-label="Pilihan Model AI"
+            className="space-y-8"
+          >
+            <div className="max-w-2xl space-y-2">
+              <div className="text-xs text-[#52525b] flex items-center gap-2">
+                <span>Akun Terhubung:</span>
+                <span className="font-mono font-semibold text-[#111113]">
+                  {OWNER_EMAIL}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>{enabledModels.length} Model Siap Pakai</span>
+              </div>
+              <h1
+                className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111113]"
+                style={{ textWrap: "balance" }}
+              >
+                Pilih Model AI untuk Mulai Bekerja
+              </h1>
+              <p className="text-sm text-[#52525b] leading-relaxed">
+                Klik salah satu model di bawah ini untuk langsung beralih ke tab ruang kerja model tersebut tanpa tampilan yang rumit.
+              </p>
+            </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[var(--text)] max-w-4xl mx-auto leading-[1.12]">
-            Input Fakta Properti Sekali. Hasilkan Listing & Flyer 300 DPI Siap Closing.
-          </h1>
-
-          <p className="text-base sm:text-lg text-[var(--muted)] max-w-2xl mx-auto leading-relaxed">
-            Codematt Agent membantu agen properti menyusun copywriting 3 gaya (Keluarga, Investor, Formal), mendesain flyer cetak ber-QR WhatsApp, dan merangkai pesan tindak lanjut tanpa resiko halusinasi fakta.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link
-              href="/dashboard"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[var(--accent)] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 hover:opacity-95 shadow-md transition-all"
+            {/* Ultra-Clean Model Selection Grid (Only agent-relevant info) */}
+            <div
+              data-testid="model-selector-grid"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
             >
-              <span>Eksplorasi Workspace Demo</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a
-              href="#roadmap"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs sm:text-sm font-bold text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
-            >
-              Lihat Progress Roadmap
-            </a>
-          </div>
+              {enabledModels.map((model) => {
+                const isSelected = model.id === activeModel.id;
 
-          {/* Social Proof & Guarantees */}
-          <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-[var(--muted)]">
-            <div className="flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Verifikasi Fakta 100% Cocok</span>
-            </div>
-            <div className="flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Ekspor Flyer Standar Percetakan 300 DPI</span>
-            </div>
-            <div className="flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Stempel Brand Kit Agensi Otomatis</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Live Property Demo Showcase */}
-      <section className="py-16 sm:py-20 border-b border-[var(--border)] bg-[var(--bg)]" id="fitur">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-              Alur Kerja Terintegrasi
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-              Dari Lembar Spesifikasi Menjadi Aset Siap Sebar
-            </h2>
-            <p className="text-xs sm:text-sm text-[var(--muted)]">
-              Klik tab di bawah untuk melihat bagaimana fakta properti diterjemahkan ke setiap format pemasaran
-            </p>
-          </div>
-
-          {/* Demo Tabs */}
-          <div className="flex justify-center">
-            <div className="p-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl inline-flex gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveDemoTab("writer")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
-                  activeDemoTab === "writer"
-                    ? "bg-[var(--accent)] text-white shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--text)]"
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>1. Listing Description</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveDemoTab("flyer")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
-                  activeDemoTab === "flyer"
-                    ? "bg-[var(--accent)] text-white shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--text)]"
-                }`}
-              >
-                <Palette className="w-4 h-4" />
-                <span>2. Flyer 300 DPI & QR</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveDemoTab("whatsapp")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
-                  activeDemoTab === "whatsapp"
-                    ? "bg-[var(--accent)] text-white shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--text)]"
-                }`}
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>3. Follow-up WhatsApp</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Demo Content Card */}
-          <div className="p-6 md:p-8 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-md">
-            {activeDemoTab === "writer" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent)] uppercase">
-                    <span>Input Fakta Properti</span>
-                    <span aria-hidden="true">→</span>
-                    <span>3 Gaya Copywriting AI</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-[var(--text)]">
-                    Tempat Pulang Ternyaman: {sample.name}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Dirancang dengan luas bangunan {sample.buildingSize} m² di atas tanah {sample.landSize} m² ({sample.bedrooms} KT / {sample.bathrooms} KM) dengan legalitas {sample.certificate}. Berada di lokasi premium {sample.location}.
-                  </p>
-                  <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-1.5 text-xs">
-                    <span className="font-bold text-[var(--text)]">🛡️ Fact-Check Safeguard:</span>
-                    <p className="text-[var(--muted)]">Harga Rp {(sample.price / 1000000000).toFixed(2)} M teruji 100% akurat tanpa karangan angka.</p>
-                  </div>
-                  <Link
-                    href="/listing"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)] hover:underline"
-                  >
-                    <span>Coba di Listing Writer Studio</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-5 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3 font-mono text-xs">
-                  <div className="text-[11px] text-[var(--accent)] font-bold">VARIASI 1: EMOSIONAL / KELUARGA</div>
-                  <div className="text-[var(--text)] text-[12px] leading-relaxed">
-                    &ldquo;Bayangkan memulai hari dengan pemandangan pegunungan asri dan udara sejuk bersama keluarga di {sample.name}...&rdquo;
-                  </div>
-                  <div className="pt-2 border-t border-[var(--border)] text-[11px] text-[var(--accent)] font-bold">
-                    VARIASI 2: INVESTOR / ROI
-                  </div>
-                  <div className="text-[var(--text)] text-[12px] leading-relaxed">
-                    &ldquo;Peluang capital gain tinggi di koridor berkembang {sample.location}. Estimasi rental yield 7-9% per tahun...&rdquo;
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeDemoTab === "flyer" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="text-xs font-mono font-bold text-[var(--accent)] uppercase">
-                    Grafis Siap Cetak
-                  </span>
-                  <h3 className="text-xl font-bold text-[var(--text)]">
-                    Flyer Multi-Ukuran dengan QR WhatsApp Dinamis
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Mendukung 5 standar dimensi: Instagram Square (1080×1080), Portrait (1080×1350), Story Reels (1080×1920), Landscape Ads (1200×628), dan Dokumen Cetak A4 (300 DPI). Dilengkapi QR code otomatis yang langsung membuka chat WhatsApp agen.
-                  </p>
-                  <Link
-                    href="/flyer"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)] hover:underline"
-                  >
-                    <span>Buka Flyer Studio Interaktif</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] text-center space-y-3">
-                  <div className="w-24 h-24 mx-auto bg-white p-2 rounded-xl shadow-sm border border-[var(--border)] flex items-center justify-center">
-                    <QrCode className="w-20 h-20 text-[var(--accent)]" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-[var(--text)] block">Scan untuk Chat WhatsApp</span>
-                    <span className="text-[11px] text-[var(--muted)]">{agent.name} · {agent.agency}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeDemoTab === "whatsapp" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="text-xs font-mono font-bold text-emerald-600 uppercase">
-                    Pesan Closing Cepat
-                  </span>
-                  <h3 className="text-xl font-bold text-[var(--text)]">
-                    Follow-up WhatsApp Berbasis 5 Skenario
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Tindak lanjuti prospek pasca survei lokasi, penurunan harga, konsultasi simulasi KPR, atau pengingat booking fee dengan 1-klik buka WhatsApp Web.
-                  </p>
-                  <Link
-                    href="/followup"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)] hover:underline"
-                  >
-                    <span>Coba Fitur Follow-up WhatsApp</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-xs text-[var(--text)] space-y-2 leading-relaxed">
-                  <p className="font-sans">
-                    &ldquo;Halo Ibu Maria, terima kasih atas waktunya kemarin saat survei di *{sample.name}* ({sample.location}). Sebagai pengingat, properti ini berstatus *{sample.certificate}* di harga spesial *Rp {(sample.price / 1000000000).toFixed(2)} M*...&rdquo;
-                  </p>
-                  <div className="text-[10px] text-[var(--muted)] text-right font-mono">
-                    Siap kirim via WhatsApp
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* 4 Feature Value Pillars */}
-      <section className="py-16 sm:py-20 border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-              Kelebihan Platform
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-              Mengapa Agen Memilih Codematt Agent?
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center font-bold">
-                1
-              </div>
-              <h3 className="text-sm font-bold text-[var(--text)]">Verifikasi Fakta Anti-Halusinasi</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Algoritma audit dua sisi memastikan angka harga, luas tanah, dan legalitas sertifikat tetap persis seperti fakta fisik unit.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center font-bold">
-                2
-              </div>
-              <h3 className="text-sm font-bold text-[var(--text)]">Flyer 300 DPI Standar Percetakan</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Resolusi tinggi vektor dan CMYK-safe, tajam saat disebar di WhatsApp maupun saat dicetak selebaran A4 di percetakan.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center font-bold">
-                3
-              </div>
-              <h3 className="text-sm font-bold text-[var(--text)]">Dynamic QR WhatsApp Link</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Calon pembeli yang memindai flyer brosur langsung diarahkan ke chat WhatsApp agen tanpa perlu mengetik ulang nomor telepon.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center font-bold">
-                4
-              </div>
-              <h3 className="text-sm font-bold text-[var(--text)]">Brand Kit Agensi Otomatis</h3>
-              <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Logo kantor, lisensi AREBI, nomor telepon, dan warna brand agen otomatis terstempel di setiap materi pemasaran yang dihasilkan.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-16 sm:py-20 border-b border-[var(--border)] bg-[var(--bg)]" id="pricing">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
-              Paket Transparan
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-              Investasi Terjangkau untuk Hasil Closing Berlipat
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                name: "Free Trial",
-                price: "Rp 0",
-                period: "selamanya",
-                desc: "Untuk eksplorasi fitur dasar",
-                ai: "25 request / bln",
-                flyer: "5 flyer / bln",
-                current: false,
-              },
-              {
-                name: "Starter Pro",
-                price: "Rp 149.000",
-                period: "/ bulan",
-                desc: "Paling populer untuk agen aktif",
-                ai: "150 request / bln",
-                flyer: "50 flyer 300 DPI / bln",
-                current: true,
-              },
-              {
-                name: "Top Producer",
-                price: "Rp 349.000",
-                period: "/ bulan",
-                desc: "Untuk volume listing tinggi",
-                ai: "500 request / bln",
-                flyer: "200 flyer 300 DPI / bln",
-                current: false,
-              },
-              {
-                name: "Brokerage Team",
-                price: "Rp 899.000",
-                period: "/ bulan",
-                desc: "Untuk kantor cabang (5-10 agen)",
-                ai: "2.500 request / bln",
-                flyer: "1.000 flyer 300 DPI / bln",
-                current: false,
-              },
-            ].map((p, idx) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-2xl border transition-all flex flex-col justify-between ${
-                  p.current
-                    ? "bg-[var(--surface)] border-[var(--accent)] ring-2 ring-[var(--accent)] shadow-md"
-                    : "bg-[var(--surface)] border-[var(--border)]"
-                }`}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-bold text-[var(--text)]">{p.name}</h3>
-                    <p className="text-[11px] text-[var(--muted)]">{p.desc}</p>
-                  </div>
-                  <div>
-                    <span className="text-2xl font-bold font-mono text-[var(--text)]">{p.price}</span>
-                    <span className="text-xs text-[var(--muted)]"> {p.period}</span>
-                  </div>
-                  <div className="space-y-1.5 pt-3 border-t border-[var(--border)] text-xs font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-[var(--muted)]">AI Generasi:</span>
-                      <span className="font-bold text-[var(--text)]">{p.ai}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--muted)]">Flyer 300 DPI:</span>
-                      <span className="font-bold text-[var(--text)]">{p.flyer}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-5 mt-5 border-t border-[var(--border)]">
-                  <Link
-                    href="/dashboard"
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold block text-center transition-all ${
-                      p.current
-                        ? "bg-[var(--accent)] text-white shadow-xs hover:opacity-95"
-                        : "bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface)]"
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    data-testid={`select-model-${model.id}`}
+                    onClick={() => handleSelectModelAndLaunch(model.id)}
+                    className={`group text-left p-6 rounded-xl border transition-all flex flex-col justify-between gap-6 cursor-pointer ${
+                      isSelected
+                        ? "bg-[#fef9c3]/55 border-[#f5b800] ring-2 ring-[#f5b800]/40"
+                        : "bg-white border-[#e4e4e7] hover:border-[#f5b800]"
                     }`}
                   >
-                    {p.current ? "Mulai Sekarang" : "Pilih Paket"}
-                  </Link>
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs text-[#52525b]">
+                        <span>{model.provider}</span>
+                        <span className="font-mono tabular-nums">
+                          {model.contextWindow}
+                        </span>
+                      </div>
+
+                      <div className="text-lg font-bold text-[#111113]">
+                        {model.name}
+                      </div>
+
+                      <p className="text-xs text-[#52525b] leading-relaxed">
+                        {model.summary}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#e4e4e7] flex items-center justify-between text-xs">
+                      <span className="text-[#52525b]">
+                        {model.strengths[0]}
+                      </span>
+                      <span className="font-semibold text-[#111113] inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        <span>Buka Tab Model</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#f5b800]" />
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 2: RUANG KERJA AGEN (AUTO-OPENED ON MODEL SELECT) */}
+        {activeView === "workspace" && (
+          <section
+            id="workspace"
+            data-testid="active-model-workspace"
+            aria-label="Ruang Kerja Agen AI"
+            className="space-y-5"
+          >
+            {/* Instant Model Tabs Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e4e4e7]">
+              <div
+                role="tablist"
+                aria-label="Tab Model AI Aktif"
+                className="flex items-center gap-1.5 overflow-x-auto py-1"
+              >
+                {enabledModels.map((model) => {
+                  const isCurrent = model.id === activeModel.id;
+                  return (
+                    <button
+                      key={model.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isCurrent}
+                      data-testid={`workspace-tab-${model.id}`}
+                      onClick={() => setSelectedModelId(model.id)}
+                      className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        isCurrent
+                          ? "bg-[#f5b800] text-[#111113]"
+                          : "bg-[#fafafa] text-[#52525b] hover:text-[#111113] border border-[#e4e4e7]"
+                      }`}
+                    >
+                      {model.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Minimalist Agent Controls Toggle (Hidden by default to keep workspace clean) */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  data-testid="toggle-agent-options"
+                  onClick={() => setShowAgentConfig((prev) => !prev)}
+                  className={`px-3 py-2 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                    showAgentConfig
+                      ? "bg-[#fef9c3] border-[#f5b800] text-[#111113] font-semibold"
+                      : "bg-white border-[#e4e4e7] text-[#52525b] hover:text-[#111113]"
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Peran: {activePersona.name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCompareMode((prev) => !prev)}
+                  className={`px-3 py-2 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                    compareMode
+                      ? "bg-[#f5b800] border-[#f5b800] text-[#111113] font-semibold"
+                      : "bg-white border-[#e4e4e7] text-[#52525b] hover:text-[#111113]"
+                  }`}
+                >
+                  <Columns2 className="w-3.5 h-3.5" />
+                  <span>Bandingkan 2 Model</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Agent Role & Custom Instruction Drawer (Only shown when requested) */}
+            {showAgentConfig && (
+              <div className="p-5 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#111113]">
+                    Pilih Peran Spesialis Agen
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAgentConfig(false)}
+                    className="text-xs text-[#52525b] hover:text-[#111113] cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {AGENT_PERSONAS.map((persona) => {
+                    const isSelected = persona.id === activePersona.id;
+                    return (
+                      <button
+                        key={persona.id}
+                        type="button"
+                        onClick={() => setSelectedAgentId(persona.id)}
+                        className={`text-left p-3.5 rounded-lg border transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-white border-[#f5b800] ring-1 ring-[#f5b800]"
+                            : "bg-white border-[#e4e4e7] hover:border-[#111113]/30"
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-[#111113]">
+                          {persona.name}
+                        </div>
+                        <div className="text-[11px] text-[#52525b] mt-0.5">
+                          {persona.role}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <label
+                    htmlFor="custom-system-instruction"
+                    className="block font-semibold text-[#111113]"
+                  >
+                    Instruksi Khusus Tambahan (Opsional)
+                  </label>
+                  <input
+                    id="custom-system-instruction"
+                    type="text"
+                    value={customSystemPrompt}
+                    onChange={(e) => setCustomSystemPrompt(e.target.value)}
+                    placeholder={activePersona.systemPrompt}
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-[#e4e4e7] text-[#111113] text-xs"
+                  />
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Secondary Model Bar when Compare Mode is enabled */}
+            {compareMode && (
+              <div className="px-4 py-3 rounded-xl bg-[#fef9c3]/45 border border-[#f5b800] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="text-[#111113]">
+                  Membandingkan langsung <strong>{activeModel.name}</strong> dengan{" "}
+                  <strong>{secondaryModel?.name}</strong>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="compare-model-select"
+                    className="font-semibold text-[#111113]"
+                  >
+                    Model Pembanding:
+                  </label>
+                  <select
+                    id="compare-model-select"
+                    value={secondaryModel?.id || ""}
+                    onChange={(e) => setCompareModelId(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-[#e4e4e7] text-[#111113] font-medium"
+                  >
+                    {enabledModels
+                      .filter((m) => m.id !== activeModel.id)
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.provider})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Focused Agent Chat Canvas */}
+            <div className="flex flex-col rounded-xl bg-white border border-[#e4e4e7] min-h-[520px]">
+              {/* Minimalist Header inside Workspace */}
+              <div className="px-6 py-3.5 border-b border-[#e4e4e7] bg-[#fafafa] rounded-t-xl flex items-center justify-between gap-4">
+                <div className="text-xs flex items-center gap-2">
+                  <span className="font-bold text-[#111113] text-sm">
+                    {activeModel.name}
+                  </span>
+                  {compareMode && secondaryModel && (
+                    <span className="font-bold text-[#111113] text-sm">
+                      vs. {secondaryModel.name}
+                    </span>
+                  )}
+                  <span aria-hidden="true" className="text-[#52525b]">
+                    ·
+                  </span>
+                  <span className="text-[#52525b]">{activeModel.provider}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleResetSession}
+                  aria-label="Bersihkan Percakapan"
+                  className="px-2.5 py-1 rounded-lg border border-[#e4e4e7] bg-white hover:bg-[#fafafa] text-xs text-[#52525b] hover:text-[#111113] inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Bersihkan</span>
+                </button>
+              </div>
+
+              {/* Conversation Stream (Distraction-free, no billing clutter) */}
+              <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[460px]">
+                {turns.map((t) => {
+                  if (t.role === "user") {
+                    return (
+                      <div key={t.id} className="flex justify-end">
+                        <div className="max-w-xl px-4 py-3 rounded-xl bg-[#fef9c3] border border-[#f5b800] text-[#111113] text-xs sm:text-sm leading-relaxed">
+                          <p className="whitespace-pre-wrap">{t.content}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (t.comparisonResponses && t.comparisonResponses.length === 2) {
+                    return (
+                      <div key={t.id} className="space-y-2">
+                        <div className="text-xs text-[#52525b]">
+                          Perbandingan Respons · {t.timestamp}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {t.comparisonResponses.map((cmp) => (
+                            <div
+                              key={cmp.modelId}
+                              className="p-4 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-2 text-xs leading-relaxed"
+                            >
+                              <div className="flex items-center justify-between pb-2 border-b border-[#e4e4e7]">
+                                <span className="font-bold text-[#111113]">
+                                  {cmp.modelName}
+                                </span>
+                                <span className="text-[#52525b]">
+                                  {cmp.provider}
+                                </span>
+                              </div>
+                              <FormattedMessage text={cmp.content} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="p-5 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-3"
+                    >
+                      <div className="flex items-center justify-between text-xs text-[#52525b] pb-2 border-b border-[#e4e4e7]">
+                        <div>
+                          <span className="font-bold text-[#111113]">
+                            {t.modelName}
+                          </span>
+                          <span aria-hidden="true"> · </span>
+                          <span>{activePersona.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTurn(t.id, t.content)}
+                          aria-label="Salin jawaban"
+                          className="text-[#52525b] hover:text-[#111113] inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          {copiedTurnId === t.id ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Tersalin</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Salin</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <FormattedMessage text={t.content} />
+                    </div>
+                  );
+                })}
+
+                {loading && (
+                  <div className="p-4 rounded-xl bg-[#fafafa] border border-[#e4e4e7] text-xs text-[#52525b]">
+                    Memproses bersama {activeModel.name}...
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Starter Prompts Row */}
+              <div className="px-6 py-2.5 bg-[#fafafa] border-t border-[#e4e4e7] flex items-center gap-2 overflow-x-auto">
+                <Sparkles className="w-3.5 h-3.5 text-[#f5b800] shrink-0" />
+                {activePersona.starterPrompts.map((sp, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleRunPrompt(sp)}
+                    disabled={loading}
+                    className="px-3 py-1 rounded-lg bg-white border border-[#e4e4e7] hover:border-[#f5b800] text-xs text-[#111113] whitespace-nowrap shrink-0 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {sp}
+                  </button>
+                ))}
+              </div>
+
+              {/* Minimalist Prompt Input Bar */}
+              <div className="p-4 border-t border-[#e4e4e7] bg-white rounded-b-xl">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleRunPrompt();
+                  }}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <input
+                    ref={promptInputRef}
+                    type="text"
+                    value={promptInput}
+                    onChange={(e) => setPromptInput(e.target.value)}
+                    placeholder={`Tulis instruksi untuk ${activeModel.name}...`}
+                    aria-label="Input pesan untuk agen AI"
+                    className="flex-1 px-4 py-3 rounded-lg bg-[#fafafa] border border-[#e4e4e7] text-xs sm:text-sm text-[#111113] placeholder:text-[#52525b]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !promptInput.trim()}
+                    className="px-5 py-3 rounded-lg bg-[#f5b800] hover:bg-[#e5ac00] disabled:opacity-50 text-[#111113] text-xs font-bold flex items-center justify-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{loading ? "Memproses..." : "Kirim"}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 3: STATISTIK SESI & TELEMETRI VISUAL */}
+        {activeView === "telemetry" && (
+          <SessionTelemetryDashboard
+            models={models}
+            turns={sessionTelemetryTurns}
+            selectedModelId={activeModel.id}
+            onSelectModel={(id) => handleSelectModelAndLaunch(id)}
+            onRunBenchmarkSweep={handleRunBenchmarkSweep}
+          />
+        )}
+
+        {/* VIEW 4: PENGATURAN OWNER (REGISTRI MODEL & KOMERSIALISASI) */}
+        {activeView === "owner" && (
+          <div className="space-y-10">
+            <ModelRegistryPanel
+              models={models}
+              selectedModelId={activeModel.id}
+              onSelectModel={(id) => handleSelectModelAndLaunch(id)}
+              onToggleModelEnabled={handleToggleModelEnabled}
+              onUpdateMultiplier={handleUpdateMultiplier}
+              onAddCustomModel={handleAddCustomModel}
+            />
+
+            <CommercialHubPanel
+              ownerEmail={OWNER_EMAIL}
+              sessionTokens={sessionTokens}
+              sessionWholesaleUsd={sessionWholesaleUsd}
+              sessionRetailUsd={sessionRetailUsd}
+              clientKeys={clientKeys}
+              onCreateKey={handleCreateClientKey}
+              onToggleKeyStatus={handleToggleKeyStatus}
+              onRevokeKey={handleRevokeKey}
+            />
           </div>
-        </div>
-      </section>
+        )}
+      </main>
 
-      {/* Embedded Roadmap Section */}
-      <section className="py-16 sm:py-20 border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <Roadmap />
-        </div>
-      </section>
+      {/* ENGAGING BOTTOM SUB-MENU & "TRAKTIR KOPI" SUPPORT DOCK */}
+      <footer
+        aria-label="Sub-menu Bawah dan Dukungan Proyek"
+        className="sticky bottom-0 z-30 bg-white/95 backdrop-blur border-t border-[#e4e4e7]"
+      >
+        {/* Expandable "Traktir Kopi" (Buy a Coffee) Interactive Support Drawer */}
+        {showCoffeeMenu && (
+          <div
+            data-testid="coffee-support-drawer"
+            className="border-b border-[#e4e4e7] bg-[#fafafa]"
+          >
+            <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#111113]">
+                    <Coffee className="w-4 h-4 text-[#f5b800]" />
+                    <span>Traktir Kopi untuk Pengembangan Codematt Agent</span>
+                  </div>
+                  <p className="text-xs text-[#52525b] max-w-xl">
+                    Suka dengan antarmuka multi-model yang bersih dan cepat ini? Dukung kreator ({OWNER_EMAIL}) dengan secangkir kopi agar server dan integrasi model AI baru terus berjalan.
+                  </p>
+                </div>
 
-      {/* Footer */}
-      <footer className="py-12 bg-[var(--surface)] border-t border-[var(--border)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[var(--muted)]">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-md bg-[var(--accent)] text-white flex items-center justify-center font-bold text-xs">
-              c.
-            </span>
-            <span className="font-semibold text-[var(--text)]">Codematt Agent</span>
-            <span>· AI Workspace for Real Estate Agents</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCoffeeMenu(false)}
+                  aria-label="Tutup panel traktir kopi"
+                  className="p-1.5 rounded-lg border border-[#e4e4e7] bg-white text-[#52525b] hover:text-[#111113] cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {coffeeThankYou && (
+                <div
+                  role="status"
+                  data-testid="coffee-thank-you-banner"
+                  className="p-4 rounded-xl bg-[#fef9c3] border border-[#f5b800] flex items-center justify-between gap-4 text-xs text-[#111113]"
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <Heart className="w-4 h-4 text-[#111113] fill-current shrink-0" />
+                    <span>{coffeeThankYou}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoffeeThankYou(null)}
+                    className="font-semibold underline cursor-pointer shrink-0"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleSendCoffeeSupport}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end"
+              >
+                {/* 3 Coffee Tier Cards */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {COFFEE_TIERS.map((tier) => {
+                    const isPicked = tier.id === selectedCoffeeId;
+                    return (
+                      <button
+                        key={tier.id}
+                        type="button"
+                        data-testid={`select-${tier.id}`}
+                        onClick={() => setSelectedCoffeeId(tier.id)}
+                        className={`text-left p-4 rounded-xl border transition-all cursor-pointer ${
+                          isPicked
+                            ? "bg-[#fef9c3]/65 border-[#f5b800] ring-1 ring-[#f5b800]"
+                            : "bg-white border-[#e4e4e7] hover:border-[#111113]/40"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-xs font-mono font-bold text-[#111113]">
+                          <span className="inline-flex items-center gap-1 text-[#111113]">
+                            <Coffee className="w-3.5 h-3.5 text-[#f5b800]" />
+                            <span>{tier.cups}x</span>
+                          </span>
+                          <span>{tier.amountIdr}</span>
+                        </div>
+                        <div className="text-xs font-bold text-[#111113] mt-2">
+                          {tier.title}
+                        </div>
+                        <p className="text-[11px] text-[#52525b] mt-1">
+                          {tier.caption}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Supporter Name, Message & Submit Button */}
+                <div className="lg:col-span-5 flex flex-col sm:flex-row gap-2.5">
+                  <input
+                    type="text"
+                    value={supporterName}
+                    onChange={(e) => setSupporterName(e.target.value)}
+                    placeholder="Nama Anda (opsional)"
+                    aria-label="Nama pendukung"
+                    className="px-3 py-2.5 rounded-lg bg-white border border-[#e4e4e7] text-xs text-[#111113] sm:w-40"
+                  />
+                  <input
+                    type="text"
+                    value={supporterMessage}
+                    onChange={(e) => setSupporterMessage(e.target.value)}
+                    placeholder="Pesan semangat..."
+                    aria-label="Pesan dukungan"
+                    className="flex-1 px-3 py-2.5 rounded-lg bg-white border border-[#e4e4e7] text-xs text-[#111113]"
+                  />
+                  <button
+                    type="submit"
+                    data-testid="submit-coffee-support"
+                    className="px-4 py-2.5 rounded-lg bg-[#f5b800] hover:bg-[#e5ac00] text-[#111113] text-xs font-bold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <Coffee className="w-3.5 h-3.5" />
+                    <span>Kirim Kopi</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Sub-Menu Bar */}
+        <div className="max-w-6xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs">
+          {/* Quick Sub-Menu Switcher */}
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setActiveView("models")}
+              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                activeView === "models"
+                  ? "bg-[#111113] text-white font-semibold"
+                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Daftar Model</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView("workspace")}
+              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                activeView === "workspace"
+                  ? "bg-[#111113] text-white font-semibold"
+                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Tab Aktif: {activeModel.name}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView("telemetry")}
+              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                activeView === "telemetry"
+                  ? "bg-[#111113] text-white font-semibold"
+                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Statistik ({sessionTokens.toLocaleString("id-ID")} tok)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView("owner")}
+              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                activeView === "owner"
+                  ? "bg-[#111113] text-white font-semibold"
+                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
+              }`}
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Pengaturan Owner</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="hover:text-[var(--text)]">
-              Workspace
-            </Link>
-            <Link href="/listing" className="hover:text-[var(--text)]">
-              Listing Writer
-            </Link>
-            <Link href="/flyer" className="hover:text-[var(--text)]">
-              Flyer Studio
-            </Link>
-            <Link href="/roadmap" className="hover:text-[var(--text)]">
-              Roadmap
-            </Link>
+          {/* Engaging "Traktir Kopi / Buy a Coffee" CTA Button */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              data-testid="buy-coffee-trigger"
+              onClick={() => setShowCoffeeMenu((prev) => !prev)}
+              className="px-3.5 py-1.5 rounded-lg bg-[#fef9c3] hover:bg-[#f5b800] border border-[#f5b800] text-[#111113] font-semibold inline-flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <Coffee className="w-3.5 h-3.5" />
+              <span>Traktir Kopi</span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono tabular-nums">{coffeeCount}</span>
+            </button>
           </div>
-
-          <div>© 2026 Codematt Agent. Built for real estate excellence.</div>
         </div>
       </footer>
     </div>
   );
+}
+
+function FormattedMessage({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const blocks: React.ReactNode[] = [];
+  let inCodeBlock = false;
+  let codeBuffer: string[] = [];
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      if (inCodeBlock) {
+        blocks.push(
+          <pre
+            key={`code-${idx}`}
+            className="p-3.5 rounded-lg bg-white border border-[#e4e4e7] font-mono text-xs text-[#111113] overflow-x-auto"
+          >
+            <code>{codeBuffer.join("\n")}</code>
+          </pre>
+        );
+        codeBuffer = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      return;
+    }
+
+    if (inCodeBlock) {
+      codeBuffer.push(line);
+      return;
+    }
+
+    if (!trimmed) {
+      return;
+    }
+
+    if (trimmed.startsWith("### ")) {
+      blocks.push(
+        <h4 key={idx} className="text-sm font-bold text-[#111113] pt-1">
+          {renderInlineFormatting(trimmed.replace(/^###\s+/, ""))}
+        </h4>
+      );
+      return;
+    }
+
+    if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+      blocks.push(
+        <h3 key={idx} className="text-base font-bold text-[#111113] pt-1">
+          {renderInlineFormatting(trimmed.replace(/^#+\s+/, ""))}
+        </h3>
+      );
+      return;
+    }
+
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      blocks.push(
+        <div
+          key={idx}
+          className="flex items-start gap-2 text-xs sm:text-sm text-[#111113] leading-relaxed pl-1"
+        >
+          <span
+            className="text-[#f5b800] font-bold select-none"
+            aria-hidden="true"
+          >
+            •
+          </span>
+          <span>{renderInlineFormatting(trimmed.slice(2))}</span>
+        </div>
+      );
+      return;
+    }
+
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const match = trimmed.match(/^(\d+\.)\s+(.*)$/);
+      if (match) {
+        blocks.push(
+          <div
+            key={idx}
+            className="flex items-start gap-2 text-xs sm:text-sm text-[#111113] leading-relaxed pl-1"
+          >
+            <span className="font-mono font-bold text-[#111113] select-none">
+              {match[1]}
+            </span>
+            <span>{renderInlineFormatting(match[2])}</span>
+          </div>
+        );
+        return;
+      }
+    }
+
+    blocks.push(
+      <p key={idx} className="text-xs sm:text-sm text-[#111113] leading-relaxed">
+        {renderInlineFormatting(trimmed)}
+      </p>
+    );
+  });
+
+  return <div className="space-y-2">{blocks}</div>;
+}
+
+function renderInlineFormatting(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-semibold text-[#111113]">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={i}
+          className="px-1.5 py-0.5 rounded bg-white border border-[#e4e4e7] font-mono text-[11px] text-[#111113]"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
 }

@@ -6,7 +6,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as AiRequest;
     const { task, locale, instructions, facts } = body;
-    const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     // Prepare prompt
     const systemPrompt = `You are Codematt Agent, an elite AI real estate assistant and copywriter for professional Indonesian property agents.
@@ -43,7 +42,7 @@ CRITICAL RULES:
 
     // If Gemini wasn't called or failed or returned empty, use our calibrated domain engine
     if (!generatedText) {
-      generatedText = generateDeterministicOutput(task, locale, facts, instructions);
+      generatedText = generateDeterministicOutput(task, locale, facts);
     }
 
     // Try parsing as JSON or structured object
@@ -88,8 +87,7 @@ CRITICAL RULES:
 function generateDeterministicOutput(
   task: string,
   locale: "id" | "en",
-  facts: Record<string, string | number | null>,
-  instructions: string
+  facts: Record<string, string | number | null>
 ): string {
   const name = facts.name || facts.property_name || "Hunian Eksklusif";
   const location = facts.location || "Lokasi Strategis";

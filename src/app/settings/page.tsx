@@ -2,18 +2,12 @@
 
 import React, { useState } from "react";
 import {
-  Settings,
   Save,
   Check,
-  Globe,
   Sun,
   Moon,
   Laptop,
-  Database,
-  Trash2,
-  RefreshCw,
   Bell,
-  Lock,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
@@ -24,6 +18,7 @@ export default function SettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [waNotifications, setWaNotifications] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const handleSave = () => {
     setSaved(true);
@@ -31,10 +26,8 @@ export default function SettingsPage() {
   };
 
   const handleResetData = () => {
-    if (confirm("Reset seluruh data lokal ke setelan awal?")) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    localStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -126,11 +119,54 @@ export default function SettingsPage() {
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
+                aria-label="Mata Uang Default"
                 className="px-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)]"
               >
                 <option value="IDR">Rupiah (IDR - Rp)</option>
                 <option value="USD">US Dollar (USD - $)</option>
               </select>
+            </div>
+
+            {/* Notifications */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[var(--border)]">
+              <div>
+                <span className="font-semibold text-[var(--text)] flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  <span>Notifikasi Prospek & Kuota</span>
+                </span>
+                <span className="text-[var(--muted)]"> Pengingat jadwal survei dan ringkasan kuota mingguan</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={emailAlerts}
+                    onChange={(e) => setEmailAlerts(e.target.checked)}
+                    className="rounded border-[var(--border)]"
+                  />
+                  <span>Email</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={waNotifications}
+                    onChange={(e) => setWaNotifications(e.target.checked)}
+                    className="rounded border-[var(--border)]"
+                  />
+                  <span>WhatsApp</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border)] flex justify-end">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-[var(--accent)] text-neutral-950 font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+              >
+                {saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                <span>{saved ? "Preferensi Tersimpan!" : "Simpan Preferensi"}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -148,13 +184,32 @@ export default function SettingsPage() {
                 Menghapus seluruh listing tersimpan dan mengembalikan profil agen ke setelan demo awal.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleResetData}
-              className="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold hover:bg-rose-100 transition-colors whitespace-nowrap self-start sm:self-auto"
-            >
-              Reset Data
-            </button>
+            {!confirmingReset ? (
+              <button
+                type="button"
+                onClick={() => setConfirmingReset(true)}
+                className="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold hover:bg-rose-100 transition-colors whitespace-nowrap self-start sm:self-auto"
+              >
+                Reset Data
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleResetData}
+                  className="px-3 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors whitespace-nowrap"
+                >
+                  Ya, Reset Sekarang
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingReset(false)}
+                  className="px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] font-semibold hover:bg-[var(--surface)] transition-colors whitespace-nowrap"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
