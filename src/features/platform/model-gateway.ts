@@ -679,3 +679,135 @@ export function buildModelEfficiencyFrontier(
   };
 }
 
+export interface ModelSwitchSavingsResult {
+  sourceModelId: string;
+  sourceModelName: string;
+  targetModelId: string;
+  targetModelName: string;
+  monthlyTokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  sourceWholesaleMonthlyUsd: number;
+  targetWholesaleMonthlyUsd: number;
+  wholesaleMonthlySavingsUsd: number;
+  sourceRetailMonthlyUsd: number;
+  targetRetailMonthlyUsd: number;
+  retailMonthlySavingsUsd: number;
+  savingsPercent: number;
+  annualSavingsUsd: number;
+  annualSavingsIdr: number;
+  latencyDeltaMs: number;
+  speedupPercent: number;
+  isCheaper: boolean;
+  efficiencyRatio: number;
+  summaryText: string;
+}
+
+export function calculateModelSwitchSavings(params: {
+  sourceModel: AIModelConfig;
+  targetModel: AIModelConfig;
+  monthlyTokens: number;
+  inputRatio?: number;
+  usdToIdrRate?: number;
+}): ModelSwitchSavingsResult {
+  const { sourceModel, targetModel } = params;
+  const monthlyTokens = Math.max(10_000, params.monthlyTokens);
+  const inputRatio = Math.max(0.05, Math.min(0.95, params.inputRatio ?? 0.35));
+  const usdToIdr = params.usdToIdrRate ?? 15800;
+
+  const inputTokens = Math.round(monthlyTokens * inputRatio);
+  const outputTokens = Math.max(0, monthlyTokens - inputTokens);
+
+  const sourceWholesale =
+    (inputTokens / 1_000_000) * sourceModel.wholesaleInputPer1M +
+    (outputTokens / 1_000_000) * sourceModel.wholesaleOutputPer1M;
+
+  const targetWholesale =
+    (inputTokens / 1_000_000) * targetModel.wholesaleInputPer1M +
+    (outputTokens / 1_000_000) * targetModel.wholesaleOutputPer1M;
+
+  const wholesaleSavings = sourceWholesale - targetWholesale;
+  const sourceRetail = sourceWholesale * Math.max(1, sourceModel.retailMarkupMultiplier);
+  const targetRetail = targetWholesale * Math.max(1, targetModel.retailMarkupMultiplier);
+  const retailSavings = sourceRetail - targetRetail;
+
+  const savingsPercent =
+    sourceWholesale > 0
+      ? Math.round((wholesaleSavings / sourceWholesale) * 100)
+      : 0;
+
+  const annualSavingsUsd = Number((wholesaleSavings * 12).toFixed(2));
+  const annualSavingsIdr = Math.round(annualSavingsUsd * usdToIdr);
+
+  const latencyDeltaMs = targetModel.avgLatencyMs - sourceModel.avgLatencyMs;
+  const speedupPercent =
+    sourceModel.avgLatencyMs > 0
+      ? Math.round(((sourceModel.avgLatencyMs - targetModel.avgLatencyMs) / sourceModel.avgLatencyMs) * 100)
+      : 0;
+
+  const isCheaper = wholesaleSavings > 0;
+  const efficiencyRatio =
+    targetWholesale > 0
+      ? Number((sourceWholesale / targetWholesale).toFixed(2))
+      : 1;
+
+  let summaryText = "";
+  if (isCheaper) {
+    const speedNote =
+      latencyDeltaMs < 0
+        ? `dan ${Math.abs(latencyDeltaMs)}ms (${speedupPercent}%) lebih cepat`
+        : `dengan kompromi latensi +${latencyDeltaMs}ms`;
+    summaryText = `Beralih dari ${sourceModel.name} ke ${targetModel.name} menghemat sekitar $${wholesaleSavings.toFixed(2)}/bln (${savingsPercent}%) ${speedNote}.`;
+  } else if (wholesaleSavings === 0) {
+    summaryText = `Biaya komputasi ${sourceModel.name} dan ${targetModel.name} identik pada volume ini.`;
+  } else {
+    summaryText = `Beralih dari ${sourceModel.name} ke ${targetModel.name} membutuhkan investasi tambahan +$${Math.abs(wholesaleSavings).toFixed(2)}/bln untuk kemampuan model yang lebih tinggi.`;
+  }
+
+  return {
+    sourceModelId: sourceModel.id,
+    sourceModelName: sourceModel.name,
+    targetModelId: targetModel.id,
+    targetModelName: targetModel.name,
+    monthlyTokens,
+    inputTokens,
+    outputTokens,
+    sourceWholesaleMonthlyUsd: Number(sourceWholesale.toFixed(4)),
+    targetWholesaleMonthlyUsd: Number(targetWholesale.toFixed(4)),
+    wholesaleMonthlySavingsUsd: Number(wholesaleSavings.toFixed(4)),
+    sourceRetailMonthlyUsd: Number(sourceRetail.toFixed(4)),
+    targetRetailMonthlyUsd: Number(targetRetail.toFixed(4)),
+    retailMonthlySavingsUsd: Number(retailSavings.toFixed(4)),
+    savingsPercent,
+    annualSavingsUsd,
+    annualSavingsIdr,
+    latencyDeltaMs,
+    speedupPercent,
+    isCheaper,
+    efficiencyRatio,
+    summaryText,
+  };
+}
+
+export function compareAllModelSwitchSavings(params: {
+  sourceModel: AIModelConfig;
+  allModels: AIModelConfig[];
+  monthlyTokens: number;
+  inputRatio?: number;
+  usdToIdrRate?: number;
+}): ModelSwitchSavingsResult[] {
+  const { sourceModel, allModels, monthlyTokens, inputRatio, usdToIdrRate } = params;
+  return allModels
+    .filter((m) => m.enabled && m.id !== sourceModel.id)
+    .map((target) =>
+      calculateModelSwitchSavings({
+        sourceModel,
+        targetModel: target,
+        monthlyTokens,
+        inputRatio,
+        usdToIdrRate,
+      })
+    )
+    .sort((a, b) => b.wholesaleMonthlySavingsUsd - a.wholesaleMonthlySavingsUsd);
+}
+

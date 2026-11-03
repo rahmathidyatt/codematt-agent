@@ -12,6 +12,7 @@ import {
   summarizeSessionTelemetry,
 } from "@/features/platform/model-gateway";
 import { ModelLatencyCostD3Chart } from "@/components/platform/ModelLatencyCostD3Chart";
+import { ModelCostEstimator } from "@/components/platform/ModelCostEstimator";
 
 interface SessionTelemetryDashboardProps {
   models: AIModelConfig[];
@@ -64,7 +65,7 @@ export function SessionTelemetryDashboard({
       id="telemetry"
       data-testid="session-telemetry-dashboard"
       aria-label="Dasbor Telemetri Sesi dan Performa Model"
-      className="py-6 space-y-8 scroll-mt-20"
+      className="py-6 pb-28 space-y-8 scroll-mt-20"
     >
       {/* Section Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -198,6 +199,15 @@ export function SessionTelemetryDashboard({
       <ModelLatencyCostD3Chart
         rows={summary.rows}
         selectedModelId={selectedModelId}
+        onSelectModel={onSelectModel}
+      />
+
+      {/* Monthly Cost Switch Estimator Based on Session Usage Patterns */}
+      <ModelCostEstimator
+        models={models}
+        selectedModelId={selectedModelId}
+        sessionTokens={summary.totalTokens}
+        totalRequests={summary.totalRequests}
         onSelectModel={onSelectModel}
       />
 

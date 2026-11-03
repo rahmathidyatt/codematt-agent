@@ -7,6 +7,8 @@ import {
   filterModels,
   summarizeSessionTelemetry,
   buildModelEfficiencyFrontier,
+  calculateModelSwitchSavings,
+  compareAllModelSwitchSavings,
 } from "../src/features/platform/model-gateway.ts";
 
 test("calculateTokenEconomics computes wholesale cost, retail charge, and gross margin", () => {
@@ -116,4 +118,42 @@ test("buildModelEfficiencyFrontier computes Pareto frontier and task recommendat
   assert.ok(reasoningFrontier.recommendedModel);
   assert.equal(reasoningFrontier.recommendedModel.modelId, "deepseek-r1");
 });
+
+test("calculateModelSwitchSavings correctly computes monthly and annual savings between models", () => {
+  const gpt4o = INITIAL_MODELS.find((m) => m.id === "chatgpt-4o");
+  const gemini = INITIAL_MODELS.find((m) => m.id === "gemini-3.8-flash");
+  assert.ok(gpt4o && gemini);
+
+  const res = calculateModelSwitchSavings({
+    sourceModel: gpt4o,
+    targetModel: gemini,
+    monthlyTokens: 10_000_000,
+    inputRatio: 0.35,
+  });
+
+  assert.equal(res.sourceModelId, "chatgpt-4o");
+  assert.equal(res.targetModelId, "gemini-3.8-flash");
+  assert.ok(res.isCheaper);
+  assert.ok(res.wholesaleMonthlySavingsUsd > 0);
+  assert.ok(res.savingsPercent > 80);
+  assert.ok(res.latencyDeltaMs < 0); // Gemini is faster
+  assert.ok(res.speedupPercent > 0);
+  assert.equal(res.annualSavingsUsd, Number((res.wholesaleMonthlySavingsUsd * 12).toFixed(2)));
+});
+
+test("compareAllModelSwitchSavings ranks alternatives by monthly savings", () => {
+  const gpt4o = INITIAL_MODELS.find((m) => m.id === "chatgpt-4o");
+  assert.ok(gpt4o);
+
+  const comparisons = compareAllModelSwitchSavings({
+    sourceModel: gpt4o,
+    allModels: INITIAL_MODELS,
+    monthlyTokens: 5_000_000,
+  });
+
+  assert.equal(comparisons.length, INITIAL_MODELS.length - 1);
+  // Highest savings against GPT-4o should be low-cost models like Llama or Gemini
+  assert.ok(comparisons[0].wholesaleMonthlySavingsUsd >= comparisons[1].wholesaleMonthlySavingsUsd);
+});
+
 

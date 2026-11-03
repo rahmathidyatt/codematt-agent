@@ -67,6 +67,19 @@ const COFFEE_TIERS: CoffeeTier[] = [
   },
 ];
 
+let turnCounter = 1000;
+function createTurnId(prefix: string): string {
+  turnCounter += 1;
+  return `${prefix}-${turnCounter}`;
+}
+
+function getCurrentTimeLabel(): string {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 export default function MultiModelAgentPlatformPage() {
   const [models, setModels] = useState<AIModelConfig[]>(INITIAL_MODELS);
   const [selectedModelId, setSelectedModelId] = useState<string>("gemini-3.8-flash");
@@ -221,17 +234,14 @@ export default function MultiModelAgentPlatformPage() {
     if (!textToSend || loading) return;
 
     const userTurn: ChatTurn = {
-      id: `usr-${Date.now()}`,
+      id: createTurnId("usr"),
       role: "user",
       content: textToSend,
       modelId: activeModel.id,
       modelName: activeModel.name,
       provider: activeModel.provider,
       agentId: activePersona.id,
-      timestamp: new Date().toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      timestamp: getCurrentTimeLabel(),
       tokensUsed: 0,
       wholesaleCostUsd: 0,
       retailChargeUsd: 0,
@@ -261,17 +271,14 @@ export default function MultiModelAgentPlatformPage() {
         const c = json.comparison;
 
         const assistantTurn: ChatTurn = {
-          id: `ai-${Date.now()}`,
+          id: createTurnId("ai"),
           role: "assistant",
           content: p.content,
           modelId: p.modelId,
           modelName: p.modelName,
           provider: p.provider,
           agentId: activePersona.id,
-          timestamp: new Date().toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          timestamp: getCurrentTimeLabel(),
           tokensUsed: p.tokensUsed + (c ? c.tokensUsed : 0),
           wholesaleCostUsd: p.wholesaleCostUsd + (c ? c.wholesaleCostUsd : 0),
           retailChargeUsd: p.retailChargeUsd + (c ? c.retailChargeUsd : 0),
@@ -313,7 +320,7 @@ export default function MultiModelAgentPlatformPage() {
     setTelemetryProbes([]);
     setTurns([
       {
-        id: `turn-reset-${Date.now()}`,
+        id: createTurnId("turn-reset"),
         role: "assistant",
         content: `### Sesi Baru Dimulai · ${activeModel.name}\n\nSiap menerima instruksi Anda melalui peran **${activePersona.name}**. Silakan ketik pesan di bawah.`,
         modelId: activeModel.id,
