@@ -83,10 +83,10 @@ export function CommercialHubPanel({
             Arsitektur Platform & Rencana Komersialisasi
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-[#111113]">
-            Gateway Akun Pribadi yang Siap Dikomersialkan
+            Rancangan Gateway Multi-Model (Demo)
           </h2>
           <p className="text-sm text-[#52525b] mt-1 max-w-2xl">
-            Seluruh panggilan model terhubung ke akun utama Anda ({ownerEmail}), mendukung produktivitas pribadi hari ini dan monetisasi pelanggan di masa depan.
+            Ini adalah prototipe untuk {ownerEmail}. Adapter AI berbayar, akun pelanggan, dan tagihan belum terhubung. Semua perhitungan pendapatan merupakan simulasi.
           </p>
         </div>
 
@@ -99,7 +99,7 @@ export function CommercialHubPanel({
               Satu Antarmuka, Berbagai Model AI
             </h3>
             <p className="text-xs text-[#52525b] leading-relaxed">
-              Tanpa perlu membuka banyak tab untuk ChatGPT, Gemini, Claude, dan DeepSeek, seluruh model disatukan dalam ruang kerja minimalis yang langsung siap pakai.
+              Tanpa perlu membuka banyak tab untuk ChatGPT, Gemini, Claude, dan DeepSeek, katalog model ditampilkan untuk demonstrasi antarmuka. Belum semua provider terhubung.
             </p>
           </div>
 
@@ -292,7 +292,7 @@ export function CommercialHubPanel({
               <span>Kunci API Klien & Akses Pelanggan</span>
             </h3>
             <p className="text-xs text-[#52525b] mt-0.5">
-              Buat kunci akses terukur yang terhubung ke akun utama Anda untuk pengguna beta atau aplikasi eksternal
+              Buat contoh kunci dalam antarmuka saja. Ini bukan kredensial API asli dan tidak dapat mengakses server.
             </p>
           </div>
 
