@@ -49,7 +49,7 @@ export default function LoginPage() {
         return;
       }
       setPassword("");
-      router.push("/dashboard");
+      router.push("/account");
       router.refresh();
     } catch {
       setFormError("Koneksi ke layanan autentikasi gagal. Silakan coba lagi.");
