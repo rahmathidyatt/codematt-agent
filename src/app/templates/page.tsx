@@ -3,16 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  Layers,
   Search,
   Copy,
   Trash2,
-  ExternalLink,
-  Plus,
-  Home,
   Palette,
   FileText,
-  Filter,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
