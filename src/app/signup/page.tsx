@@ -3,14 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  ShieldCheck,
-  Lock,
-  Mail,
-  User,
   ArrowRight,
-  Eye,
-  EyeOff,
-  Sparkles,
 } from "lucide-react";
 
 export default function SignupPage() {
