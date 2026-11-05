@@ -18,11 +18,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
+          package-manager-cache: false
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
       - name: Install locked dependencies
@@ -33,3 +34,17 @@ jobs:
         run: bun run build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+      - name: HTTP smoke test
+        shell: bash
+        run: |
+          PORT=3100 HOSTNAME=127.0.0.1 node .next/standalone/server.js > /tmp/codematt-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3100/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          if ! node tests/smoke.mjs; then
+            cat /tmp/codematt-server.log
+            exit 1
+          fi
