@@ -7,12 +7,7 @@ import {
   Copy,
   Check,
   Send,
-  User,
-  Building,
-  ArrowRight,
   RefreshCw,
-  Phone,
-  Mail,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
