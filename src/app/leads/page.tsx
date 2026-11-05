@@ -3,13 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  Users,
-  Plus,
-  Phone,
-  Mail,
-  Building,
-  CheckCircle2,
-  Clock,
   ArrowRight,
   MessageSquare,
 } from "lucide-react";
@@ -58,7 +51,7 @@ const SAMPLE_LEADS: Lead[] = [
 
 export default function LeadsPage() {
   const { locale } = useAgentStore();
-  const [leads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
+  const [leads] = useState<Lead[]>(SAMPLE_LEADS);
 
   return (
     <WorkspaceShell
