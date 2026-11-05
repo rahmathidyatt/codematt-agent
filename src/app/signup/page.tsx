@@ -81,7 +81,6 @@ export default function SignupPage() {
               type="text"
               required
               disabled={!authEnabled}
-              disabled={!authEnabled}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Rahmat Hidayat"
@@ -94,6 +93,7 @@ export default function SignupPage() {
             <input
               type="text"
               required
+              disabled={!authEnabled}
               value={agency}
               onChange={(e) => setAgency(e.target.value)}
               placeholder="Contoh: ERA Indonesia / Ray White / Independen"
