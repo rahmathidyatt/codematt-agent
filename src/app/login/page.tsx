@@ -4,20 +4,16 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ShieldCheck,
   Lock,
   Mail,
   ArrowRight,
   Eye,
   EyeOff,
   Sparkles,
-  CheckCircle2,
 } from "lucide-react";
-import { useAgentStore } from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { locale } = useAgentStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
