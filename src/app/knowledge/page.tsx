@@ -2,14 +2,9 @@
 
 import React, { useState } from "react";
 import {
-  BookOpen,
   ChevronDown,
   ChevronUp,
-  Search,
   ShieldCheck,
-  FileCheck,
-  Scale,
-  Sparkles,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";

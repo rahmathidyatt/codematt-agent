@@ -31,7 +31,7 @@ import { SessionTelemetryDashboard } from "@/components/platform/SessionTelemetr
 import { ModelRegistryPanel } from "@/components/platform/ModelRegistryPanel";
 import { CommercialHubPanel } from "@/components/platform/CommercialHubPanel";
 
-const OWNER_EMAIL = "amathmrs02@gmail.com";
+const OWNER_EMAIL = "akun belum terhubung (demo)";
 
 type ActiveTabView = "models" | "workspace" | "telemetry" | "owner";
 
@@ -102,7 +102,7 @@ export default function MultiModelAgentPlatformPage() {
   const [selectedCoffeeId, setSelectedCoffeeId] = useState<string>("coffee-3");
   const [supporterName, setSupporterName] = useState<string>("");
   const [supporterMessage, setSupporterMessage] = useState<string>("");
-  const [coffeeCount, setCoffeeCount] = useState<number>(48);
+  const [coffeeCount] = useState<number>(0);
   const [coffeeThankYou, setCoffeeThankYou] = useState<string | null>(null);
 
   const promptInputRef = useRef<HTMLInputElement | null>(null);
@@ -112,91 +112,20 @@ export default function MultiModelAgentPlatformPage() {
       id: "turn-welcome",
       role: "assistant",
       content:
-        "### Halo! Agen AI Siap Membantu Anda\n\nAnda sedang berada di tab ruang kerja aktif. Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B**.\n- **Fokus & Minimalis**: Seluruh detail teknis yang tidak relevan dengan agen telah disembunyikan agar Anda bisa fokus penuh pada pekerjaan.",
+        "### Mode Demo · Agen AI\n\nAnda sedang berada di tab ruang kerja aktif. Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B**.\n- **Fokus & Minimalis**: Seluruh detail teknis yang tidak relevan dengan agen telah disembunyikan agar Anda bisa fokus penuh pada pekerjaan.",
       modelId: "gemini-3.8-flash",
       modelName: "Gemini 3.8 Flash",
       provider: "Google DeepMind",
       agentId: "agent-orchestrator",
       timestamp: "Baru saja",
-      tokensUsed: 142,
-      wholesaleCostUsd: 0.00008,
-      retailChargeUsd: 0.0002,
-      latencyMs: 380,
+      tokensUsed: 0,
+      wholesaleCostUsd: 0,
+      retailChargeUsd: 0,
+      latencyMs: 0,
     },
   ]);
 
-  const [telemetryProbes, setTelemetryProbes] = useState<ChatTurn[]>([
-    {
-      id: "probe-gemini",
-      role: "assistant",
-      content: "Kalibrasi awal sesi",
-      modelId: "gemini-3.8-flash",
-      modelName: "Gemini 3.8 Flash",
-      provider: "Google DeepMind",
-      agentId: "agent-orchestrator",
-      timestamp: "Awal sesi",
-      tokensUsed: 1480,
-      wholesaleCostUsd: 0.00041,
-      retailChargeUsd: 0.001025,
-      latencyMs: 375,
-    },
-    {
-      id: "probe-gpt4o",
-      role: "assistant",
-      content: "Kalibrasi awal sesi",
-      modelId: "chatgpt-4o",
-      modelName: "ChatGPT (GPT-4o)",
-      provider: "OpenAI",
-      agentId: "agent-orchestrator",
-      timestamp: "Awal sesi",
-      tokensUsed: 1120,
-      wholesaleCostUsd: 0.00728,
-      retailChargeUsd: 0.016016,
-      latencyMs: 595,
-    },
-    {
-      id: "probe-claude",
-      role: "assistant",
-      content: "Kalibrasi awal sesi",
-      modelId: "claude-3-7-sonnet",
-      modelName: "Claude 3.7 Sonnet",
-      provider: "Anthropic",
-      agentId: "agent-architect",
-      timestamp: "Awal sesi",
-      tokensUsed: 940,
-      wholesaleCostUsd: 0.00846,
-      retailChargeUsd: 0.01692,
-      latencyMs: 725,
-    },
-    {
-      id: "probe-deepseek",
-      role: "assistant",
-      content: "Kalibrasi awal sesi",
-      modelId: "deepseek-r1",
-      modelName: "DeepSeek R1",
-      provider: "DeepSeek",
-      agentId: "agent-analyst",
-      timestamp: "Awal sesi",
-      tokensUsed: 860,
-      wholesaleCostUsd: 0.00118,
-      retailChargeUsd: 0.003304,
-      latencyMs: 805,
-    },
-    {
-      id: "probe-llama",
-      role: "assistant",
-      content: "Kalibrasi awal sesi",
-      modelId: "llama-3-3-70b",
-      modelName: "Llama 3.3 70B Instruct",
-      provider: "Meta Open-Weights",
-      agentId: "agent-orchestrator",
-      timestamp: "Awal sesi",
-      tokensUsed: 640,
-      wholesaleCostUsd: 0.00044,
-      retailChargeUsd: 0.00132,
-      latencyMs: 280,
-    },
-  ]);
+  const [telemetryProbes, setTelemetryProbes] = useState<ChatTurn[]>([]);
 
   const enabledModels = models.filter((m) => m.enabled);
   const activeModel =
@@ -308,9 +237,22 @@ export default function MultiModelAgentPlatformPage() {
         };
 
         setTurns((prev) => [...prev, assistantTurn]);
+      } else {
+        setTurns((prev) => [...prev, {
+          ...userTurn,
+          id: createTurnId("err"),
+          role: "assistant",
+          content: "⚠️ Gateway belum dapat memproses permintaan (" + String(json.error || "UNKNOWN_ERROR") + "). Tidak ada tagihan AI yang dibuat.",
+        }]);
       }
     } catch (err) {
       console.error("Gagal menjalankan permintaan model:", err);
+      setTurns((prev) => [...prev, {
+        ...userTurn,
+        id: createTurnId("err"),
+        role: "assistant",
+        content: "⚠️ Koneksi ke gateway gagal. Silakan coba lagi. Tidak ada tagihan AI yang dibuat.",
+      }]);
     } finally {
       setLoading(false);
     }
@@ -328,10 +270,10 @@ export default function MultiModelAgentPlatformPage() {
         provider: activeModel.provider,
         agentId: activePersona.id,
         timestamp: "Baru saja",
-        tokensUsed: 64,
-        wholesaleCostUsd: 0.00003,
-        retailChargeUsd: 0.00008,
-        latencyMs: 210,
+        tokensUsed: 0,
+        wholesaleCostUsd: 0,
+        retailChargeUsd: 0,
+        latencyMs: 0,
       },
     ]);
   };
@@ -403,7 +345,7 @@ export default function MultiModelAgentPlatformPage() {
     const created: ClientApiKey = {
       id: `key-${Date.now()}`,
       label,
-      keyPreview: `sk-cm_live_${suffix}...9f01`,
+      keyPreview: `sk-cm_demo_${suffix}...9f01`,
       tier,
       monthlyQuotaUsd: quotaUsd,
       usedUsd: 0,
@@ -428,9 +370,8 @@ export default function MultiModelAgentPlatformPage() {
     const chosen =
       COFFEE_TIERS.find((c) => c.id === selectedCoffeeId) || COFFEE_TIERS[1];
     const sender = supporterName.trim() || "Sahabat AI";
-    setCoffeeCount((prev) => prev + chosen.cups);
     setCoffeeThankYou(
-      `Terima kasih banyak, ${sender}! Dukungan ${chosen.title} (${chosen.amountIdr}) berhasil dicatat untuk pengembangan Codematt Agent.`
+      `Pratinjau untuk ${sender}: ${chosen.title} (${chosen.amountIdr}). Tidak ada transaksi pembayaran atau dukungan yang diterima melalui formulir demo ini.`
     );
     setSupporterName("");
     setSupporterMessage("");
@@ -529,12 +470,12 @@ export default function MultiModelAgentPlatformPage() {
           >
             <div className="max-w-2xl space-y-2">
               <div className="text-xs text-[#52525b] flex items-center gap-2">
-                <span>Akun Terhubung:</span>
+                <span>Status:</span>
                 <span className="font-mono font-semibold text-[#111113]">
                   {OWNER_EMAIL}
                 </span>
                 <span aria-hidden="true">·</span>
-                <span>{enabledModels.length} Model Siap Pakai</span>
+                <span>{enabledModels.length} model katalog demo</span>
               </div>
               <h1
                 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111113]"
@@ -543,7 +484,7 @@ export default function MultiModelAgentPlatformPage() {
                 Pilih Model AI untuk Mulai Bekerja
               </h1>
               <p className="text-sm text-[#52525b] leading-relaxed">
-                Klik salah satu model di bawah ini untuk langsung beralih ke tab ruang kerja model tersebut tanpa tampilan yang rumit.
+                Pilih model untuk melihat pratinjau antarmuka. Adapter provider, autentikasi, biaya API, dan tagihan belum terhubung. Tidak ada respons langsung dari model berbayar di mode demo.
               </p>
             </div>
 
@@ -980,7 +921,7 @@ export default function MultiModelAgentPlatformPage() {
                     <span>Traktir Kopi untuk Pengembangan Codematt Agent</span>
                   </div>
                   <p className="text-xs text-[#52525b] max-w-xl">
-                    Suka dengan antarmuka multi-model yang bersih dan cepat ini? Dukung kreator ({OWNER_EMAIL}) dengan secangkir kopi agar server dan integrasi model AI baru terus berjalan.
+                    Formulir dukungan ini hanya demonstrasi. Belum ada pembayaran atau pengiriman dukungan yang diproses.
                   </p>
                 </div>
 

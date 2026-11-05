@@ -8,9 +8,7 @@ import {
   Share2,
   FileText,
   Video,
-  Send,
   RefreshCw,
-  ArrowRight,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";

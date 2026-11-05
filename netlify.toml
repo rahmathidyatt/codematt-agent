@@ -1,7 +1,9 @@
-# Deployment is Phase 9; this file only prepares the build settings.
+# Next.js is handled by Netlify's automatically managed runtime.
+# Explicit Bun install avoids falling back to npm without package-lock.json.
 [build]
-  command = "npm run build"
+  command = "bun install --frozen-lockfile && bun run build"
   publish = ".next"
+
 [build.environment]
   NODE_VERSION = "24"
   NEXT_TELEMETRY_DISABLED = "1"

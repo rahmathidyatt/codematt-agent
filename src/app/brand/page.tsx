@@ -5,13 +5,8 @@ import {
   ShieldCheck,
   Save,
   Check,
-  Palette,
   Phone,
   Mail,
-  Building,
-  CreditCard,
-  Sparkles,
-  RefreshCw,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";

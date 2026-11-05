@@ -55,7 +55,6 @@ export default function AssistantPage() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-    recordAiUsage();
 
     try {
       const response = await fetch("/api/ai/generate", {
@@ -76,6 +75,7 @@ export default function AssistantPage() {
       const json = await response.json();
       let replyText = "";
       if (json.ok && json.data) {
+        if (json.mode === "live") recordAiUsage();
         if (typeof json.data === "string") replyText = json.data;
         else if (json.data.response) replyText = json.data.response;
         else replyText = JSON.stringify(json.data);

@@ -77,7 +77,7 @@ export function SessionTelemetryDashboard({
             Pemakaian Token, Efisiensi Biaya & Latensi Performa
           </h2>
           <p className="text-sm text-[#52525b] mt-1 max-w-2xl">
-            Ringkasan visual real-time di seluruh model AI yang terintegrasi pada sesi ini, mencakup distribusi token, efisiensi biaya, dan kecepatan respons.
+            Visualisasi prototipe. Benchmark, latensi acuan, dan proyeksi biaya merupakan simulasi, bukan hasil pengukuran provider langsung.
           </p>
         </div>
 

@@ -4,31 +4,25 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ShieldCheck,
   Lock,
   Mail,
   ArrowRight,
   Eye,
   EyeOff,
   Sparkles,
-  CheckCircle2,
 } from "lucide-react";
-import { useAgentStore } from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { locale } = useAgentStore();
-  const [email, setEmail] = useState("rahmat.agent@codematt.id");
-  const [password, setPassword] = useState("••••••••••••");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 400);
+    setFormError("Login akun belum diaktifkan. Gunakan tombol Mode Demo. Jangan masukkan kata sandi asli.");
   };
 
   const handleDemoLogin = () => {
@@ -77,6 +71,7 @@ export default function LoginPage() {
 
         {/* Credentials Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
+          <p className="text-amber-700">Pratinjau UI saja. Jangan masukkan kredensial akun asli.</p>
           <div>
             <label className="font-semibold text-[var(--text)] block mb-1">Email Agen</label>
             <div className="relative">
@@ -118,6 +113,7 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {formError && <p role="alert" className="text-red-700">{formError}</p>}
           <button
             type="submit"
             disabled={loading}

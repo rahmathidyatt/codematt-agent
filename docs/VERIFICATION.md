@@ -1,36 +1,23 @@
-# Verifikasi Phase 0
+# Status verifikasi saat audit 2026-11-05
 
-Hasil pemeriksaan paket:
-- ESLint: PASS, nol error dan nol warning setelah perbaikan konfigurasi PostCSS.
-- Next typegen + TypeScript strict: PASS.
-- Unit test redirect: PASS, 2 test (tujuan internal diterima; input eksternal/malformed ditolak).
-- next build: PASS, halaman / dan not-found berhasil diprerender.
-- HTTP smoke hasil production build: PASS, status 200, teks foundation ditemukan,
-  header X-Content-Type-Options=nosniff dan X-Frame-Options=DENY terverifikasi.
-- Server smoke dijalankan dengan hostname 127.0.0.1 karena pembatasan network interface lingkungan pengujian.
+Dokumentasi lama berisi hasil pengujian **Phase 0**. Hasil lama tersebut **tidak** membuktikan bahwa keadaan aplikasi saat ini lulus build, memiliki autentikasi aman, atau siap dipakai secara komersial.
 
-Belum diuji: visual browser/mobile nyata, deployment Netlify, auth, RLS, storage, AI, pembayaran.
-Fitur integrasi belum dibuat. Tidak ada klaim production-ready atau audit keamanan lengkap.
+Perubahan audit disiapkan pada branch `fix/security-reliability-audit-20261105`.
 
-## Kompatibilitas
-TypeScript 7 gagal dengan parser typescript-eslint yang terpasang; dipilih TypeScript 6.
-ESLint 10 gagal dengan plugin React bawaan eslint-config-next; dipilih ESLint 9.
-ESLint 9 diberi peringatan deprecated oleh registry. Ini dev dependency, tetapi upgrade kompatibel
-harus dievaluasi sebelum beta; jangan menyatakan seluruh toolchain sudah pada versi terbaru.
-Versi exact dan package-lock disertakan. npm ci menggunakan lock yang sama.
-Peringatan npm mengenai http-proxy berasal dari lingkungan pengujian, bukan konfigurasi proyek.
+## Gate teknis
 
-## Versi yang dikunci
-- next: 16.3.8
-- react: 19.3.0
-- react-dom: 19.3.0
-- server-only: 0.0.1
-- zod: 4.6.5
-- @tailwindcss/postcss: 4.3.3
-- @types/node: 24.19.1
-- @types/react: 19.3.0
-- @types/react-dom: 19.3.0
-- eslint: 9.39.5
-- eslint-config-next: 16.3.8
-- tailwindcss: 4.3.3
-- typescript: 6.0.3
+1. GitHub Actions `Quality Gate`: `bun install --frozen-lockfile`, `bun run check`, dan `bun run build`.
+2. Audit bentuk respons `/api/gateway`: demo terlabel jelas, tidak ada panggilan lintas penyedia dengan atribusi palsu.
+3. `/api/ai/generate`: input dibatasi, mode demo tidak mengarang atribut listing yang tidak tersedia, panggilan berbayar memerlukan opt-in dan token server.
+4. Login, pendaftaran, API key, dan biaya harus diberi label simulasi sampai integrasi nyata tersedia.
+5. Deployment Netlify baru boleh dinyatakan selesai setelah URL site, hasil build, dan pemeriksaan HTTP aktual tersedia.
+
+**Jangan menandai gate sebagai PASS tanpa output eksekusi.**
+
+## Risiko terbuka
+
+- Supabase Auth, RLS, server persistence dan kuota lintas pengguna belum ditunjukkan berfungsi.
+- Rate limit global yang tahan scale-out dan billing nyata belum dibuat.
+- Katalog model, biaya, latensi acuan, telemetry benchmark dan contoh data komersial masih bersifat simulasi.
+- Browser mobile, aksesibilitas menyeluruh, integrasi deployment dan kinerja lapangan belum divalidasi.
+- Beberapa dokumen fase lama dapat menyebut target yang belum selesai.
