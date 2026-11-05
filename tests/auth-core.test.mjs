@@ -44,6 +44,16 @@ test("cookie-changing requests require a matching browser Origin", () => {
   assert.equal(isSameOriginMutation(make("https://attacker.example")), false);
   assert.equal(isSameOriginMutation(make("null")), false);
   assert.equal(isSameOriginMutation(make(null)), false);
+  const behindProxy = new Request("http://localhost:3100/api/auth/sign-in", {
+    method: "POST",
+    headers: { Host: "127.0.0.1:3100", Origin: "http://127.0.0.1:3100" },
+  });
+  assert.equal(isSameOriginMutation(behindProxy), true);
+  const mismatch = new Request("http://localhost:3100/api/auth/sign-in", {
+    method: "POST",
+    headers: { Host: "127.0.0.1:3100", Origin: "http://attacker.test" },
+  });
+  assert.equal(isSameOriginMutation(mismatch), false);
 });
 
 test("short-lived access token cookie cannot exceed upstream lifetime", () => {
