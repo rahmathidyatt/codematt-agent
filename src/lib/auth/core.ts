@@ -14,7 +14,7 @@ export function getAuthBackendConfig(env: NodeJS.ProcessEnv = process.env): Auth
     const url = new URL(rawUrl);
     // Only direct hosted Supabase projects. Custom domains require a separate reviewed allowlist.
     if (url.protocol !== "https:" || !/^[a-z0-9-]+\.supabase\.co$/.test(url.hostname) ||
-      url.username || url.password || url.search || url.hash || url.pathname !== "/") return null;
+      url.username || url.password || url.port || url.search || url.hash || url.pathname !== "/") return null;
     return { url: url.origin, publishableKey };
   } catch {
     return null;
