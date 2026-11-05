@@ -213,8 +213,8 @@ export const AGENT_PERSONAS: AgentPersona[] = [
 export const INITIAL_CLIENT_KEYS: ClientApiKey[] = [
   {
     id: "key-owner-master",
-    label: "Personal Master Gateway (amathmrs02@gmail.com)",
-    keyPreview: "sk-cm_live_98f2...4a10",
+    label: "Example Owner Gateway (DEMO)",
+    keyPreview: "sk-cm_demo_98f2...4a10",
     tier: "Enterprise",
     monthlyQuotaUsd: 500,
     usedUsd: 14.82,
@@ -224,7 +224,7 @@ export const INITIAL_CLIENT_KEYS: ClientApiKey[] = [
   {
     id: "key-beta-tenant-1",
     label: "Commercial Beta Tenant — Acme Studio",
-    keyPreview: "sk-cm_live_31c9...8b22",
+    keyPreview: "sk-cm_demo_31c9...8b22",
     tier: "Pro",
     monthlyQuotaUsd: 100,
     usedUsd: 38.40,
@@ -234,7 +234,7 @@ export const INITIAL_CLIENT_KEYS: ClientApiKey[] = [
   {
     id: "key-sandbox-eval",
     label: "Public Playground Sandbox Key",
-    keyPreview: "sk-cm_test_77d1...0e91",
+    keyPreview: "sk-cm_demo_77d1...0e91",
     tier: "Free",
     monthlyQuotaUsd: 25,
     usedUsd: 6.15,
@@ -513,11 +513,11 @@ export function summarizeSessionTelemetry(
   const overallMarginPercent =
     totalRetailUsd > 0
       ? Math.round((totalNetMarginUsd / totalRetailUsd) * 100)
-      : 60;
+      : 0;
   const blendedCostPer1kTokensUsd =
     totalTokens > 0
       ? Number(((totalWholesaleUsd / totalTokens) * 1000).toFixed(5))
-      : 0.00038;
+      : 0;
   const meanLatencyMs =
     totalRequests > 0
       ? Math.round(totalLatencyWeighted / totalRequests)
