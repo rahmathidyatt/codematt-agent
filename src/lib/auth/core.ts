@@ -27,8 +27,15 @@ export function isSameOriginMutation(request: Request): boolean {
   try {
     const expected = new URL(request.url);
     const origin = new URL(supplied);
-    return origin.origin === expected.origin &&
-      (expected.protocol === "https:" || expected.hostname === "localhost" || expected.hostname === "127.0.0.1");
+    const host = request.headers.get("host");
+    // Standalone deployments may expose a different internal request URL.
+    // Browsers cannot set Host; compare against the actual request Host too.
+    const hostOrigin = host && !/[\\/\\s@]/.test(host) && !host.includes("..")
+      ? new URL(`${expected.protocol}//${host}`).origin
+      : null;
+    const matches = origin.origin === expected.origin || (hostOrigin !== null && origin.origin === hostOrigin);
+    return matches && (origin.protocol === "https:" ||
+      origin.hostname === "localhost" || origin.hostname === "127.0.0.1");
   } catch {
     return false;
   }
