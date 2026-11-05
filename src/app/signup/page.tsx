@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Lock,
@@ -15,19 +14,16 @@ import {
 } from "lucide-react";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [agency, setAgency] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 400);
+    setFormError("Pendaftaran akun belum diaktifkan. Data tidak disimpan. Gunakan akses Mode Demo.");
   };
 
   return (
@@ -53,6 +49,7 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4 text-xs">
+          <p className="text-amber-700">Pendaftaran hanya pratinjau. Jangan masukkan kata sandi yang digunakan di layanan lain.</p>
           <div>
             <label className="font-semibold text-[var(--text)] block mb-1">Nama Lengkap</label>
             <input
@@ -101,6 +98,7 @@ export default function SignupPage() {
             />
           </div>
 
+          {formError && <p role="alert" className="text-red-700">{formError}</p>}
           <button
             type="submit"
             disabled={loading}
