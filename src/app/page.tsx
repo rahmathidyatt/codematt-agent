@@ -202,7 +202,9 @@ export default function MultiModelAgentPlatformPage() {
         const assistantTurn: ChatTurn = {
           id: createTurnId("ai"),
           role: "assistant",
-          content: p.content,
+          content: json.mode === "live"
+            ? "Respons provider langsung. Biaya API belum dihitung oleh aplikasi, bukan berarti gratis. Periksa dashboard provider.\\n\\n" + p.content
+            : p.content,
           modelId: p.modelId,
           modelName: p.modelName,
           provider: p.provider,
