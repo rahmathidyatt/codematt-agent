@@ -24,8 +24,8 @@ export function getTrustedAppOrigin(env: NodeJS.ProcessEnv = process.env): strin
 
 export function getAuthBackendConfig(env: NodeJS.ProcessEnv = process.env): AuthBackendConfig | null {
   if (env.CODEMATT_AUTH_ENABLED !== "true" || !getTrustedAppOrigin(env)) return null;
-  const rawUrl = env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const publishableKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  const rawUrl = env.CODEMATT_SUPABASE_URL?.trim();
+  const publishableKey = env.CODEMATT_SUPABASE_PUBLISHABLE_KEY?.trim();
   const projectRef = env.CODEMATT_SUPABASE_PROJECT_REF?.trim();
   if (!rawUrl || !publishableKey || !publishableKey.startsWith("sb_publishable_") ||
     !projectRef || !/^[a-z0-9]{20}$/.test(projectRef)) return null;
