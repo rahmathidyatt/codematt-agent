@@ -4,6 +4,7 @@ import { INITIAL_MODELS, AGENT_PERSONAS } from "@/features/platform/model-gatewa
 import { readBoundedJson, isLiveAiEnabled, isLiveAiAuthorized } from "@/lib/security/ai-request";
 import { getLiveModel } from "@/lib/ai/provider-routing";
 import { executeLiveGateway, LiveGatewayError } from "@/lib/ai/live-gateway";
+import { reserveLiveAiCalls } from "@/lib/security/live-ai-budget";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { ok: false, error: "PROVIDER_NOT_CONFIGURED" },
         { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    // Reserve both provider calls conservatively before any outbound request.
+    // Per-process limits are a safety net, NOT global billing enforcement.
+    const calls = secondary && secondary.id !== primary.id ? 2 : 1;
+    const budget = reserveLiveAiCalls(calls);
+    if (!budget.ok) {
+      return NextResponse.json(
+        { ok: false, error: budget.code },
+        { status: budget.status, headers: { "Cache-Control": "no-store" } }
       );
     }
 
