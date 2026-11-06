@@ -203,7 +203,13 @@ export default function MultiModelAgentPlatformPage() {
           id: createTurnId("ai"),
           role: "assistant",
           content: json.mode === "live"
-            ? "Respons provider langsung. Biaya API belum dihitung oleh aplikasi, bukan berarti gratis. Periksa dashboard provider.\\n\\n" + p.content
+            ? [
+                "Respons langsung dari provider. Biaya API belum dihitung aplikasi, bukan berarti gratis. Periksa dashboard provider.",
+                p.content,
+                json.comparisonError
+                  ? "⚠️ Respons model pembanding gagal. Model utama berhasil, tetapi permintaan provider dapat tetap dikenai biaya."
+                  : "",
+              ].filter(Boolean).join("\n\n")
             : p.content,
           modelId: p.modelId,
           modelName: p.modelName,
@@ -244,7 +250,7 @@ export default function MultiModelAgentPlatformPage() {
           ...userTurn,
           id: createTurnId("err"),
           role: "assistant",
-          content: "⚠️ Gateway belum dapat memproses permintaan (" + String(json.error || "UNKNOWN_ERROR") + "). Tidak ada tagihan AI yang dibuat.",
+          content: "⚠️ Gateway belum dapat memproses permintaan (" + String(json.error || "UNKNOWN_ERROR") + "). Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
         }]);
       }
     } catch (err) {
@@ -253,7 +259,7 @@ export default function MultiModelAgentPlatformPage() {
         ...userTurn,
         id: createTurnId("err"),
         role: "assistant",
-        content: "⚠️ Koneksi ke gateway gagal. Silakan coba lagi. Tidak ada tagihan AI yang dibuat.",
+        content: "⚠️ Koneksi ke gateway gagal. Silakan coba lagi. Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
       }]);
     } finally {
       setLoading(false);
