@@ -54,6 +54,8 @@ Perbaikan Tahap 2 ada di branch `feat/codematt-phase2-auth-api-hardening-2026110
 
 ## Environment baru
 ```text
+APP_ORIGIN=https://codematt.example
+CODEMATT_SUPABASE_PROJECT_REF=
 CODEMATT_AUTH_ENABLED=false
 CODEMATT_DATABASE_ENABLED=false
 CODEMATT_ENABLE_LIVE_AI=false
