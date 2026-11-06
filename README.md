@@ -54,3 +54,10 @@ Lihat `.env.example`. Simpan nilai asli hanya di variabel environment server/hos
 ## Dokumentasi
 
 Lihat `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/RISKS.md`, `docs/ROADMAP.md`, dan `docs/VERIFICATION.md`. Sebagian berisi rancangan fase terdahulu, bukan bukti bahwa seluruh fitur kini benar-benar berfungsi.
+
+## Tahap 2: verifikasi tambahan
+
+- Mode live membutuhkan `CODEMATT_LIVE_AI_MAX_CALLS_PER_INSTANCE` sebesar 1 sampai 100. Tanpa itu, panggilan berbayar ditolak. Batas ini **per proses** dan tidak menggantikan kontrol biaya/provider spending limit maupun kuota persisten untuk serverless.
+- Query listing privat dibatasi ke `user_id` pengguna yang diverifikasi lewat Supabase Auth. **Uji RLS dua akun secara nyata belum tersedia** dan harus dilakukan sebelum aktivasi database.
+- Katalog Gemini 3.8 Flash menggunakan **tarif referensi standar per 6 November 2026**, bukan invoice dan bukan harga permanen. Tarif berbayar resmi berubah pada 1 Januari 2027: https://ai.google.dev/gemini-api/docs/pricing.
+- GPT-4o masih ada demi kompatibilitas UI lama, tetapi sudah deprecated dengan rencana penghentian API 14 Januari 2027: https://developers.openai.com/api/docs/deprecations. Sebelum go-live, pilih model pengganti yang terverifikasi.
