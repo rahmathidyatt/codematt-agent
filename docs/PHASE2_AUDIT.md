@@ -11,7 +11,10 @@ Perbaikan Tahap 2 ada di branch `feat/codematt-phase2-auth-api-hardening-2026110
 - Tidak ada refresh token tersimpan. Setelah token kedaluwarsa, pengguna harus login ulang.
 - Sesi tidak dipercaya dari cookie begitu saja; server melakukan GET /auth/v1/user pada Supabase Auth.
 - Sign-up mengharuskan verifikasi sesuai konfigurasi proyek dan tidak otomatis membuat sesi.
-- Mutasi sesi memeriksa Origin terhadap URL permintaan; body divalidasi dan ukurannya dibatasi.
+- Mutasi sesi memeriksa Origin terhadap `APP_ORIGIN` yang ditetapkan di konfigurasi, **bukan Host/X-Forwarded-Host**; body divalidasi dan ukurannya dibatasi.
+- Project Supabase diverifikasi terhadap `CODEMATT_SUPABASE_PROJECT_REF` sebelum autentikasi dapat diaktifkan.
+- Cookie sesi tetap Secure pada produksi. Logout memanggil Supabase Auth untuk mencabut refresh session jika dapat dijangkau, kemudian selalu membersihkan cookie; access JWT dapat tetap berlaku hingga kedaluwarsa.
+- Pembatasan percobaan login/registrasi per email per instans ditambahkan sebagai defense-in-depth, **bukan** rate limiter terpusat.
 - `/account` menampilkan status akun server, terpisah dari `/dashboard` yang masih demo lokal.
 
 **Belum untuk akses publik komersial:** perlu rate limiter persisten, pembatasan percobaan login, kebijakan password/reset, MFA bila diperlukan, audit log, pemulihan/refresh sesi yang ditinjau, dan uji dua akun nyata.
