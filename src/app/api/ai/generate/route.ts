@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { AiResult } from "@/lib/ai/contracts";
 import { readBoundedJson, isLiveAiEnabled, isLiveAiAuthorized } from "@/lib/security/ai-request";
 import { validateAiOutput } from "@/lib/ai/output-validation";
+import { reserveLiveAiCalls } from "@/lib/security/live-ai-budget";
 
 export const runtime = "nodejs";
 
@@ -125,6 +126,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { ok: false, code: "not-configured", error: "GEMINI_API_KEY_NOT_CONFIGURED" },
       { status: 503 }
+    );
+  }
+
+  const budget = reserveLiveAiCalls(1);
+  if (!budget.ok) {
+    return NextResponse.json(
+      { ok: false, code: "not-configured", error: budget.code },
+      { status: budget.status, headers: { "Cache-Control": "no-store" } }
     );
   }
 
