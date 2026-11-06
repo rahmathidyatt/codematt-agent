@@ -14,8 +14,8 @@ const validEnv = {
   CODEMATT_AUTH_ENABLED: "true",
   APP_ORIGIN: "https://codematt.example",
   CODEMATT_SUPABASE_PROJECT_REF: projectRef,
-  NEXT_PUBLIC_SUPABASE_URL: "https://abcdefghij1234567890.supabase.co",
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_placeholder",
+  CODEMATT_SUPABASE_URL: "https://abcdefghij1234567890.supabase.co",
+  CODEMATT_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_placeholder",
 };
 
 test("auth fails closed unless backend, project ref, and fixed origin are configured", () => {
@@ -40,7 +40,7 @@ test("backend and project cannot be redirected to third-party hosts", () => {
     "https://user:pass@abcdefghij1234567890.supabase.co",
     "https://differentproject.supabase.co",
   ]) {
-    assert.equal(getAuthBackendConfig({ ...validEnv, NEXT_PUBLIC_SUPABASE_URL: url }), null, url);
+    assert.equal(getAuthBackendConfig({ ...validEnv, CODEMATT_SUPABASE_URL: url }), null, url);
   }
 });
 
