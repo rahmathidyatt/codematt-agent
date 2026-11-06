@@ -44,7 +44,7 @@ Lihat `.env.example`. Simpan nilai asli hanya di variabel environment server/hos
 - `CODEMATT_ENABLE_LIVE_AI=false` secara default
 - `CODEMATT_LIVE_AI_TOKEN` adalah token server-to-server minimum 32 karakter, tidak boleh dikirim ke browser. Pengaktifannya saja **tidak menggantikan autentikasi, rate limit persisten, ataupun perhitungan biaya riil**.
 - `GEMINI_API_KEY` hanya untuk jalur Gemini yang sudah diberi izin server.
-- `APP_ORIGIN` harus alamat asal HTTPS aplikasi yang sebenarnya saat hosting, bukan domain internal Netlify. `CODEMATT_SUPABASE_PROJECT_REF` harus identik dengan subdomain proyek Supabase khusus Codematt.
+- `APP_ORIGIN` harus alamat asal HTTPS aplikasi yang sebenarnya saat hosting, bukan domain internal Netlify. `CODEMATT_SUPABASE_PROJECT_REF` harus identik dengan subdomain proyek Supabase khusus Codematt. Gunakan `CODEMATT_SUPABASE_URL` dan `CODEMATT_SUPABASE_PUBLISHABLE_KEY` khusus di server, bukan prefiks `NEXT_PUBLIC_`, untuk menghindari ketergantungan konfigurasi runtime pada nilai build browser.
 - Panggilan Auth memiliki pembatasan percobaan per instans sebagai pertahanan tambahan. Sistem produksi masih memerlukan rate limit terpusat dan uji dua akun.
 
 ## Deployment
