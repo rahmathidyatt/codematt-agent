@@ -76,3 +76,12 @@ Tidak ada kredensial asli dalam repositori. Simpan hanya di pengaturan hosting/s
 - Google Gemini model docs https://ai.google.dev/gemini-api/docs/models
 
 **Catatan arsitektur:** Implementasi sementara memakai REST dan cookie akses pendek tanpa refresh agar tidak menambah dependency atau mengubah lockfile dalam tahapan ini. Untuk sistem multi-pengguna yang stabil, migrasikan ke `@supabase/ssr` dengan cookie refresh rotation, review keamanan, versi yang dipin, dan lockfile terverifikasi sebelum aktivasi produksi.
+
+## Pemeriksaan lanjutan (2026-11-06)
+
+- Konfirmasi koneksi Supabase yang tersedia: hanya proyek Brighton dan Hybrid Office. **Tidak ditemukan proyek Codematt khusus; tidak ada SQL yang dijalankan.**
+- Pengamanan live AI: `CODEMATT_LIVE_AI_MAX_CALLS_PER_INSTANCE` wajib 1 sampai 100, menghitung pemanggilan per provider (dua model pembanding dihitung dua), fail-closed jika belum disetel. Penghitungan ini hanya per proses, **bukan** persistent billing atau rate limit lintas instans. Tidak mengesahkan produksi.
+- Helper `buildOwnedListingsUrl` dan `buildOwnedListingInsert` dipakai oleh endpoint dan diuji unit test supaya `user_id` tidak bisa diganti lewat body klien. **Hasil unit test bukan bukti RLS pada database live.**
+- Harga simulasi Gemini 3.8 Flash dikoreksi sesuai tarif standar berbayar resmi per 6 November 2026 (input $0.75 dan output $3.75 per juta token; tarif berubah 1 Januari 2027). Sumber: https://ai.google.dev/gemini-api/docs/pricing.
+- GPT-4o ditandai sebagai deprecated dalam katalog tanpa menghapus opsi demo lama. Sumber: https://developers.openai.com/api/docs/deprecations (penghentian terjadwal 14 Januari 2027).
+- CI wajib kembali lulus pada SHA terbaru sebelum mengubah status PR atau mempertimbangkan merge. Tidak ada klaim pengujian integrasi eksternal karena belum tersedia lingkungan khusus.
