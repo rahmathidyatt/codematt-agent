@@ -73,6 +73,7 @@ test("cookie security derives only from trusted origin, never request Host", () 
   assert.equal(shouldUseSecureCookie(validEnv), true);
   assert.equal(shouldUseSecureCookie({}), true);
   assert.equal(shouldUseSecureCookie({ APP_ORIGIN: "http://localhost:3000" }), false);
+  assert.equal(shouldUseSecureCookie({ NODE_ENV: "production", APP_ORIGIN: "http://localhost:3000" }), true);
 });
 
 test("short-lived access token cookie cannot exceed provider expiry", () => {
