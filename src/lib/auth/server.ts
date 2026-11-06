@@ -16,7 +16,7 @@ export function authJson(body: unknown, status = 200): NextResponse {
 
 export async function supabaseAuthFetch(
   backend: AuthBackendConfig,
-  route: "/auth/v1/token?grant_type=password" | "/auth/v1/signup" | "/auth/v1/user",
+  route: "/auth/v1/token?grant_type=password" | "/auth/v1/signup" | "/auth/v1/user" | "/auth/v1/logout?scope=local",
   options: { method: "GET" | "POST"; bearer?: string; body?: unknown }
 ): Promise<Response> {
   return fetch(backend.url + route, {
