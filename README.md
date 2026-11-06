@@ -9,7 +9,7 @@ Proyek Next.js ini berisi katalog model AI, antarmuka ruang kerja multi-model, a
 - **UI katalog dan perbandingan model:** dapat dicoba sebagai DEMO. Endpoint `/api/gateway` tidak berpura-pura memanggil OpenAI/Anthropic/DeepSeek/Meta; outputnya secara eksplisit diberi label demonstrasi, dengan pemakaian dan biaya token nol.
 - **Generator konten properti:** mode bawaan hanya menyusun draf berdasarkan fakta yang diberikan. Tidak menambahkan detail properti yang tidak tersedia. Draf harus diverifikasi sebelum publikasi.
 - **Live Gemini:** jalur server telah disiapkan untuk `/api/ai/generate`, tetapi **dinonaktifkan secara bawaan**. Belum ada autentikasi pengguna, kuota persisten, billing, maupun perlindungan komersial secara menyeluruh. Jangan aktifkan live API pada situs publik sebelum backend pengamanan selesai.
-- **Login dan registrasi:** masih UI prototipe, **bukan autentikasi nyata**. Tombol Mode Demo tersedia. Jangan masukkan kata sandi sungguhan.
+- **Login dan registrasi:** adapter server ke Supabase Auth tersedia secara **opt-in** dan secara default nonaktif. Tanpa konfigurasi `CODEMATT_AUTH_ENABLED`, `APP_ORIGIN`, project ref, dan publishable key yang sesuai, formulir akun tetap nonaktif; akses Mode Demo terpisah. Belum diuji terhadap proyek Codematt yang nyata.
 - **API key klien, dashboard biaya, dan donasi:** hanya contoh UI / perkiraan, tidak menerbitkan credential, menagih pengguna, atau memproses pembayaran.
 - **Data listing, ledger dan profil:** sebagian diisi contoh dan tersimpan di localStorage, bukan database multi-tenant yang aman.
 
@@ -44,6 +44,8 @@ Lihat `.env.example`. Simpan nilai asli hanya di variabel environment server/hos
 - `CODEMATT_ENABLE_LIVE_AI=false` secara default
 - `CODEMATT_LIVE_AI_TOKEN` adalah token server-to-server minimum 32 karakter, tidak boleh dikirim ke browser. Pengaktifannya saja **tidak menggantikan autentikasi, rate limit persisten, ataupun perhitungan biaya riil**.
 - `GEMINI_API_KEY` hanya untuk jalur Gemini yang sudah diberi izin server.
+- `APP_ORIGIN` harus alamat asal HTTPS aplikasi yang sebenarnya saat hosting, bukan domain internal Netlify. `CODEMATT_SUPABASE_PROJECT_REF` harus identik dengan subdomain proyek Supabase khusus Codematt.
+- Panggilan Auth memiliki pembatasan percobaan per instans sebagai pertahanan tambahan. Sistem produksi masih memerlukan rate limit terpusat dan uji dua akun.
 
 ## Deployment
 
