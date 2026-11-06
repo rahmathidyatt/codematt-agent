@@ -49,3 +49,26 @@ jobs:
             cat /tmp/codematt-server.log
             exit 1
           fi
+
+      - name: Auth and owner-isolation contract smoke (mocked upstream only)
+        shell: bash
+        run: |
+          # This never sends credentials to Supabase and NEVER tests real RLS.
+          export APP_ORIGIN=http://127.0.0.1:3101
+          export CODEMATT_AUTH_ENABLED=true
+          export CODEMATT_DATABASE_ENABLED=true
+          export CODEMATT_CONTRACT_TEST_MODE=1
+          export CODEMATT_SUPABASE_PROJECT_REF=abcdefghijklmnopqrst
+          export CODEMATT_SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co
+          export CODEMATT_SUPABASE_PUBLISHABLE_KEY=sb_publishable_contract_test_key
+          PORT=3101 HOSTNAME=127.0.0.1 node --import ./tests/mocks/mock-supabase.mjs .next/standalone/server.js > /tmp/codematt-contract.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3101/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          if ! node tests/auth-contract-smoke.mjs; then
+            cat /tmp/codematt-contract.log
+            exit 1
+          fi
