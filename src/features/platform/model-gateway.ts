@@ -72,8 +72,10 @@ export const INITIAL_MODELS: AIModelConfig[] = [
     modelSlug: "gemini-3.8-flash",
     category: "Multimodal",
     contextWindow: "1M ctx",
-    wholesaleInputPer1M: 0.15,
-    wholesaleOutputPer1M: 0.60,
+    // Reference paid standard pricing on 2026-11-06, NOT an actual invoice.
+    // Official pricing changes on 2027-01-01; keep financial UI in demo mode.
+    wholesaleInputPer1M: 0.75,
+    wholesaleOutputPer1M: 3.75,
     retailMarkupMultiplier: 2.5,
     avgLatencyMs: 420,
     enabled: true,
@@ -95,7 +97,7 @@ export const INITIAL_MODELS: AIModelConfig[] = [
     avgLatencyMs: 680,
     enabled: true,
     commercialTier: "Pro",
-    summary: "Model unggulan serbabisa untuk penulisan kreatif, sintesis strategi bisnis, dan komunikasi profesional.",
+    summary: "Model serbabisa untuk penulisan dan analisis. Status API deprecated, jadwal penghentian 14 Januari 2027. Cek migrasi sebelum mengaktifkan live.",
     strengths: ["Gaya bahasa natural", "Sintesis eksekutif", "Pengetahuan luas"],
   },
   {
