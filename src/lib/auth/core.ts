@@ -62,7 +62,7 @@ export const AUTH_COOKIE_NAME = "codematt_access";
 export function shouldUseSecureCookie(env: NodeJS.ProcessEnv = process.env): boolean {
   // An unknown origin must never be allowed to turn off Secure cookies.
   const origin = getTrustedAppOrigin(env);
-  return !origin || origin.startsWith("https:");
+  return env.NODE_ENV === "production" || !origin || origin.startsWith("https:");
 }
 
 export function authCookieMaxAge(value: unknown): number {
