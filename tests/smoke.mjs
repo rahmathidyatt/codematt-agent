@@ -106,6 +106,20 @@ const logout = await request("/api/auth/sign-out", {
 });
 assert.equal(logout.response.status, 200);
 assert.match(logout.response.headers.get("set-cookie") || "", /codematt_access=/);
+assert.equal(logout.body.upstreamRevocation, "not-applicable");
+
+const spoofedLogout = await request("/api/auth/sign-out", {
+  method: "POST",
+  headers: { Origin: "https://attacker.test", Host: "attacker.test" },
+});
+assert.equal(spoofedLogout.response.status, 403);
+
+const absentSignup = await request("/api/auth/sign-up", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ name: "Demo", agency: "Agency", email: "demo@example.com", password: "password-123" }),
+});
+assert.equal(absentSignup.response.status, 503);
 
 assert.equal(health.response.headers.get("x-frame-options"), "DENY");
 
