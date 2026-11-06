@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readBoundedJson } from "@/lib/security/ai-request";
 import { isSameOriginMutation } from "@/lib/auth/core";
 import { authJson, getVerifiedIdentity } from "@/lib/auth/server";
+import { buildOwnedListingsUrl, buildOwnedListingInsert } from "@/lib/db/listing-queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,11 +23,7 @@ export async function GET(req: NextRequest) {
   const actor = await getVerifiedIdentity(req);
   if (!actor.ok) return authJson({ ok: false, code: actor.code }, actor.status);
 
-  const endpoint = new URL(actor.backend.url + "/rest/v1/codematt_listings");
-  endpoint.searchParams.set("select", "id,name,location,price,created_at");
-  endpoint.searchParams.set("user_id", `eq.${actor.id}`);
-  endpoint.searchParams.set("order", "created_at.desc");
-  endpoint.searchParams.set("limit", "50");
+  const endpoint = buildOwnedListingsUrl(actor.backend.url, actor.id);
 
   try {
     const response = await fetch(endpoint.toString(), {
@@ -67,7 +64,7 @@ export async function POST(req: NextRequest) {
         Accept: "application/json",
         Prefer: "return=representation",
       },
-      body: JSON.stringify({ ...parsed.data, user_id: actor.id }),
+      body: JSON.stringify(buildOwnedListingInsert(actor.id, parsed.data)),
       cache: "no-store",
       signal: AbortSignal.timeout(8_000),
     });
