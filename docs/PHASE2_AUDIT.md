@@ -85,3 +85,11 @@ Tidak ada kredensial asli dalam repositori. Simpan hanya di pengaturan hosting/s
 - Harga simulasi Gemini 3.8 Flash dikoreksi sesuai tarif standar berbayar resmi per 6 November 2026 (input $0.75 dan output $3.75 per juta token; tarif berubah 1 Januari 2027). Sumber: https://ai.google.dev/gemini-api/docs/pricing.
 - GPT-4o ditandai sebagai deprecated dalam katalog tanpa menghapus opsi demo lama. Sumber: https://developers.openai.com/api/docs/deprecations (penghentian terjadwal 14 Januari 2027).
 - CI wajib kembali lulus pada SHA terbaru sebelum mengubah status PR atau mempertimbangkan merge. Tidak ada klaim pengujian integrasi eksternal karena belum tersedia lingkungan khusus.
+
+## Verifikasi kebijakan RLS melalui PostgreSQL lokal (2026-11-07)
+
+- GitHub Actions menjalankan PostgreSQL 17 sementara dengan role anon, authenticated, dan fixture auth.uid() uji, tanpa memakai kredensial Supabase.
+- Draft docs/phase2-supabase-schema-review.sql diterapkan apa adanya pada database CI. Skrip tests/sql/01-rls-integration.sql menguji ENABLE/FORCE RLS, delapan policy, isolasi dua tenant, penolakan spoofing pemilik, akses silang, CRUD sendiri, anonim, dan subject JWT kosong.
+- **Batas bukti:** pengujian ini membuktikan perilaku policy pada PostgreSQL lokal. Ini tidak menguji tanda tangan JWT, konfigurasi PostgREST/Data API di Supabase hidup, Auth produksi, atau provider spending limits.
+- Uji kontrak REST dengan upstream Supabase tiruan terpisah dari uji SQL PostgreSQL. Keduanya tidak menggantikan uji A/B dua akun nyata pada proyek Codematt khusus.
+- Tidak ada migrasi yang dijalankan ke proyek Brighton atau Hybrid Office. SQL tetap draft dan PR tetap draft sampai seluruh gate produksi dipenuhi.
