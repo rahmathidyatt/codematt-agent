@@ -1,0 +1,55 @@
+name: Netlify Codematt Demo Preview (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Preflight hanya baca, atau build preview Netlify"
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+          - preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codematt-netlify-preview
+  cancel-in-progress: false
+
+jobs:
+  netlify-preview:
+    # Only the already reviewed and CI-tested main branch is eligible.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.CODEMATT_NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.CODEMATT_NETLIFY_SITE_ID }}
+    steps:
+      - name: Checkout verified main
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Verify Netlify site identity, Git repository, branch and demo flags
+        run: node scripts/netlify-site-preflight.mjs
+      - name: Deploy Netlify preview (NEVER production)
+        if: inputs.operation == 'preview'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # No --prod flag. Netlify builds this pinned main source remotely,
+          # creating a preview without modifying the production published URL.
+          # The secret is provided through NETLIFY_AUTH_TOKEN, never argv or logs.
+          npx --yes netlify-cli@27.16.2 deploy --remote --site "$NETLIFY_SITE_ID"
+      - name: Next gate
+        if: inputs.operation == 'preview'
+        run: |
+          echo "Preview requested. Obtain its HTTPS preview URL from the Netlify CLI logs." >> "$GITHUB_STEP_SUMMARY"
+          echo "Run: DEPLOY_BASE_URL=https://<verified-preview-url> node tests/deployment-smoke.mjs" >> "$GITHUB_STEP_SUMMARY"
+          echo "Do not publish to production until preview passes and site runtime settings are verified." >> "$GITHUB_STEP_SUMMARY"

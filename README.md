@@ -65,3 +65,7 @@ Lihat `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/RISKS.md`, `docs/ROADMAP
 ### Uji RLS otomatis (PostgreSQL runner saja)
 
 Workflow CI menjalankan tests/sql/00-bootstrap.sql, draft docs/phase2-supabase-schema-review.sql, dan tests/sql/01-rls-integration.sql pada PostgreSQL 17 sementara di GitHub Actions. Uji ini memeriksa regresi policy menggunakan dua pengguna uji, CRUD sendiri, akses tenant lain dan anonim. **Tidak** memakai atau memodifikasi proyek Supabase nyata dan **tidak** membuktikan konfigurasi Auth/Data API produksi. Sebelum deployment, lakukan uji dua akun sungguhan pada proyek Codematt khusus, advisor RLS dan review migrasi.
+
+## Netlify preview deployment (manual)
+
+Rilis demo dipersiapkan melalui GitHub Actions `Netlify Codematt Demo Preview (manual)`. Workflow ini secara default hanya memeriksa metadata site Netlify. Opsi `preview` baru dapat digunakan setelah pemilik menghubungkan site ke repo Codematt/main dan menyimpan `CODEMATT_NETLIFY_SITE_ID` serta `CODEMATT_NETLIFY_AUTH_TOKEN` sebagai GitHub Actions secrets. Preflight menolak jika feature flags Auth, Database, atau Live AI terkonfigurasi aktif. **Tidak ada deployment otomatis atau `--prod` di workflow ini.** Petunjuk: [docs/NETLIFY_DEMO_RELEASE.md](docs/NETLIFY_DEMO_RELEASE.md).
