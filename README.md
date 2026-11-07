@@ -61,3 +61,7 @@ Lihat `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/RISKS.md`, `docs/ROADMAP
 - Query listing privat dibatasi ke `user_id` pengguna yang diverifikasi lewat Supabase Auth. **Uji RLS dua akun secara nyata belum tersedia** dan harus dilakukan sebelum aktivasi database.
 - Katalog Gemini 3.8 Flash menggunakan **tarif referensi standar per 6 November 2026**, bukan invoice dan bukan harga permanen. Tarif berbayar resmi berubah pada 1 Januari 2027: https://ai.google.dev/gemini-api/docs/pricing.
 - GPT-4o masih ada demi kompatibilitas UI lama, tetapi sudah deprecated dengan rencana penghentian API 14 Januari 2027: https://developers.openai.com/api/docs/deprecations. Sebelum go-live, pilih model pengganti yang terverifikasi.
+
+### Uji RLS otomatis (PostgreSQL runner saja)
+
+Workflow CI menjalankan tests/sql/00-bootstrap.sql, draft docs/phase2-supabase-schema-review.sql, dan tests/sql/01-rls-integration.sql pada PostgreSQL 17 sementara di GitHub Actions. Uji ini memeriksa regresi policy menggunakan dua pengguna uji, CRUD sendiri, akses tenant lain dan anonim. **Tidak** memakai atau memodifikasi proyek Supabase nyata dan **tidak** membuktikan konfigurasi Auth/Data API produksi. Sebelum deployment, lakukan uji dua akun sungguhan pada proyek Codematt khusus, advisor RLS dan review migrasi.
