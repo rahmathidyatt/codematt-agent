@@ -104,3 +104,26 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/00-bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f docs/phase2-supabase-schema-review.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/01-rls-integration.sql
+
+      - name: Live AI fail-closed HTTP gates (dummy credentials, no provider calls)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Dummy keys are never valid; budget intentionally unset. If any
+          # live provider call is attempted, the gate smoke must fail.
+          export CODEMATT_ENABLE_LIVE_AI=true
+          export CODEMATT_LIVE_AI_TOKEN=ci_dummy_live_token_never_use_in_production_123456789
+          export GEMINI_API_KEY=ci_dummy_key_no_real_provider_access
+          export OPENAI_API_KEY=ci_dummy_key_no_real_provider_access
+          unset CODEMATT_LIVE_AI_MAX_CALLS_PER_INSTANCE
+          PORT=3102 HOSTNAME=127.0.0.1 node .next/standalone/server.js > /tmp/codematt-live-gates.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3102/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          if ! node tests/live-ai-gates-smoke.mjs; then
+            cat /tmp/codematt-live-gates.log
+            exit 1
+          fi
