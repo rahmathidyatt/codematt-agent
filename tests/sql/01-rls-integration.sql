@@ -131,7 +131,7 @@ commit;
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', true);
-do $
+do $own_guard$
 declare n integer;
 begin
   update public.codematt_listings set location = 'Konawe'
@@ -150,7 +150,7 @@ begin
   where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   get diagnostics n = row_count;
   if n <> 1 then raise exception 'FAIL: B cannot delete own profile'; end if;
-end $;
+end $own_guard$;
 commit;
 
 -- ANON: table privileges are denied; policy does not grant access.
@@ -182,7 +182,7 @@ commit;
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '', true);
-do $$
+do $missing_guard$
 declare n integer;
 begin
   select count(*) into n from public.codematt_listings;
@@ -195,7 +195,7 @@ begin
     raise exception 'FAIL: authenticated role without subject inserted listing';
   exception when insufficient_privilege then null;
   end;
-end $;
+end $missing_guard$;
 commit;
 
 select 'LOCAL PostgreSQL RLS INTEGRATION PASS: two tenants, spoofing, updates, deletes, anonymous, missing subject' as result;
