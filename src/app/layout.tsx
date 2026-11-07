@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+    <html lang="id" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased bg-[#ffffff] text-[#111113] selection:bg-[#fef08a] selection:text-[#111113]">
         <AgentProvider>{children}</AgentProvider>
       </body>
