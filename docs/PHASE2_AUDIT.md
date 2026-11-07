@@ -93,3 +93,11 @@ Tidak ada kredensial asli dalam repositori. Simpan hanya di pengaturan hosting/s
 - **Batas bukti:** pengujian ini membuktikan perilaku policy pada PostgreSQL lokal. Ini tidak menguji tanda tangan JWT, konfigurasi PostgREST/Data API di Supabase hidup, Auth produksi, atau provider spending limits.
 - Uji kontrak REST dengan upstream Supabase tiruan terpisah dari uji SQL PostgreSQL. Keduanya tidak menggantikan uji A/B dua akun nyata pada proyek Codematt khusus.
 - Tidak ada migrasi yang dijalankan ke proyek Brighton atau Hybrid Office. SQL tetap draft dan PR tetap draft sampai seluruh gate produksi dipenuhi.
+
+## Audit lanjutan: live AI fail-closed contract (2026-11-07)
+
+- Endpoint `/api/gateway` dan `/api/ai/generate` diuji ulang pada server Next.js CI dalam mode `CODEMATT_ENABLE_LIVE_AI=true`, memakai token dan kunci provider **dummy**.
+- Tes HTTP baru `tests/live-ai-gates-smoke.mjs` memverifikasi: akses tanpa token/secret salah ditolak 401; provider yang belum memiliki adapter ditolak 501; model pembanding yang tidak didukung ditolak sebelum memanggil primary; seluruh model yang didukung ditolak 503 jika batas pemanggilan AI belum diatur.
+- Kegagalan otorisasi dan provider setup untuk generator sekarang secara eksplisit mengirim `Cache-Control: no-store`.
+- Tidak ada panggilan provider berbayar atau kredensial nyata dalam CI. Pengujian belum membuktikan kinerja model live, billing atau pengendalian penggunaan secara global di serverless.
+- Batas penggunaan yang tersedia tetap **per proses** dan bukan substitusi distributed quota/rate limiting; jangan mengaktifkan live AI publik sampai batas global, pelacakan biaya dan kontrol penyalahgunaan terverifikasi.
