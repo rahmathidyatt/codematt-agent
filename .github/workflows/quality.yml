@@ -16,6 +16,20 @@ jobs:
   validation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: codematt_ci_only
+          POSTGRES_DB: codematt_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d codematt_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,6 +51,7 @@ jobs:
       - name: HTTP smoke test
         shell: bash
         run: |
+          export APP_ORIGIN=http://127.0.0.1:3100
           PORT=3100 HOSTNAME=127.0.0.1 node .next/standalone/server.js > /tmp/codematt-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
@@ -48,3 +63,80 @@ jobs:
             cat /tmp/codematt-server.log
             exit 1
           fi
+
+      - name: Auth and owner-isolation contract smoke (mocked upstream only)
+        shell: bash
+        run: |
+          # This never sends credentials to Supabase and NEVER tests real RLS.
+          export APP_ORIGIN=http://127.0.0.1:3101
+          export CODEMATT_AUTH_ENABLED=true
+          export CODEMATT_DATABASE_ENABLED=true
+          export CODEMATT_CONTRACT_TEST_MODE=1
+          export CODEMATT_SUPABASE_PROJECT_REF=abcdefghijklmnopqrst
+          export CODEMATT_SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co
+          export CODEMATT_SUPABASE_PUBLISHABLE_KEY=sb_publishable_contract_test_key
+          PORT=3101 HOSTNAME=127.0.0.1 node --import ./tests/mocks/mock-supabase.mjs .next/standalone/server.js > /tmp/codematt-contract.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3101/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          if ! node tests/auth-contract-smoke.mjs; then
+            cat /tmp/codematt-contract.log
+            exit 1
+          fi
+
+      - name: Validate RLS on isolated PostgreSQL (not a live Supabase project)
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: postgres
+          PGPASSWORD: codematt_ci_only
+          PGDATABASE: codematt_ci
+        run: |
+          set -euo pipefail
+          if ! command -v psql > /dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+          psql -v ON_ERROR_STOP=1 -f tests/sql/00-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f docs/phase2-supabase-schema-review.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/01-rls-integration.sql
+
+      - name: Live AI fail-closed HTTP gates (dummy credentials, no provider calls)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Dummy keys are never valid; budget intentionally unset. If any
+          # live provider call is attempted, the gate smoke must fail.
+          export CODEMATT_ENABLE_LIVE_AI=true
+          export CODEMATT_LIVE_AI_TOKEN=ci_dummy_live_token_never_use_in_production_123456789
+          export GEMINI_API_KEY=ci_dummy_key_no_real_provider_access
+          export OPENAI_API_KEY=ci_dummy_key_no_real_provider_access
+          unset CODEMATT_LIVE_AI_MAX_CALLS_PER_INSTANCE
+          PORT=3102 HOSTNAME=127.0.0.1 node .next/standalone/server.js > /tmp/codematt-live-gates.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3102/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          if ! node tests/live-ai-gates-smoke.mjs; then
+            cat /tmp/codematt-live-gates.log
+            exit 1
+          fi
+
+      - name: Verify Netlify-style Next.js build without standalone output
+        shell: bash
+        env:
+          NETLIFY: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          rm -rf .next
+          bun run build
+          test -f .next/BUILD_ID
+          test ! -f .next/standalone/server.js
+          echo "Netlify-style Next.js build passed (adapter packaging not tested here)."

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -11,12 +11,44 @@ export default function SignupPage() {
   const [agency, setAgency] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [authEnabled, setAuthEnabled] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [formError, setFormError] = useState("");
 
-  const handleSignup = (e: React.FormEvent) => {
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/auth/status", { signal: controller.signal, cache: "no-store" })
+      .then((res) => res.json())
+      .then((data: { enabled?: boolean }) => setAuthEnabled(data.enabled === true))
+      .catch(() => { /* stay in demo mode */ });
+    return () => controller.abort();
+  }, []);
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError("Pendaftaran akun belum diaktifkan. Data tidak disimpan. Gunakan akses Mode Demo.");
+    if (!authEnabled || loading) return;
+    setLoading(true);
+    setFormError("");
+    setSuccessMessage("");
+    try {
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, agency, email, password }),
+      });
+      const result: { ok?: boolean; code?: string; message?: string } = await response.json();
+      if (!response.ok || !result.ok) {
+        setFormError("Pendaftaran belum dapat diproses. Periksa input dan coba lagi.");
+        return;
+      }
+      setPassword("");
+      setSuccessMessage(result.message || "Pendaftaran diterima. Periksa email Anda, lalu masuk.");
+    } catch {
+      setFormError("Koneksi pendaftaran gagal. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,12 +74,13 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4 text-xs">
-          <p className="text-amber-700">Pendaftaran hanya pratinjau. Jangan masukkan kata sandi yang digunakan di layanan lain.</p>
+          <p className="text-amber-700">{authEnabled ? "Pendaftaran menggunakan Supabase Auth. Verifikasi email mungkin diperlukan." : "Pendaftaran belum dikonfigurasi. Jangan masukkan kata sandi akun asli."}</p>
           <div>
             <label className="font-semibold text-[var(--text)] block mb-1">Nama Lengkap</label>
             <input
               type="text"
               required
+              disabled={!authEnabled}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Rahmat Hidayat"
@@ -60,6 +93,7 @@ export default function SignupPage() {
             <input
               type="text"
               required
+              disabled={!authEnabled}
               value={agency}
               onChange={(e) => setAgency(e.target.value)}
               placeholder="Contoh: ERA Indonesia / Ray White / Independen"
@@ -72,6 +106,7 @@ export default function SignupPage() {
             <input
               type="email"
               required
+              disabled={!authEnabled}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nama@agenproperti.id"
@@ -84,6 +119,7 @@ export default function SignupPage() {
             <input
               type="password"
               required
+              disabled={!authEnabled}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 8 karakter"
@@ -92,12 +128,13 @@ export default function SignupPage() {
           </div>
 
           {formError && <p role="alert" className="text-red-700">{formError}</p>}
+          {successMessage && <p role="status" className="text-green-700">{successMessage}</p>}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !authEnabled}
             className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-95 shadow-sm transition-opacity"
           >
-            <span>{loading ? "Mendaftarkan..." : "Daftar & Masuk ke Workspace"}</span>
+            <span>{loading ? "Mendaftarkan..." : "Daftar Akun"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

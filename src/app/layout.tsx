@@ -17,13 +17,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codematt Agent — Unified Multi-Model AI Agent Platform",
+  title: "Codematt Agent | Demo Workspace AI Multi-Model",
   description:
-    "Minimalist multi-model AI agent workspace and commercial gateway integrating ChatGPT, Gemini, Claude, DeepSeek, and Llama under one personal master account.",
+    "Prototipe workspace agen AI multi-model untuk demonstrasi fitur, perbandingan model, dan konten properti. Koneksi AI live, akun, dan penyimpanan cloud nonaktif secara default.",
   openGraph: {
-    title: "Codematt Agent — Unified Multi-Model AI Agent Platform",
+    title: "Codematt Agent | Demo Workspace AI Multi-Model",
     description:
-      "Minimalist multi-model AI agent workspace and commercial gateway integrating ChatGPT, Gemini, Claude, DeepSeek, and Llama under one personal master account.",
+      "Prototipe workspace AI multi-model. Simulasi katalog dan pemakaian AI, tanpa pemrosesan pembayaran atau layanan produksi.",
     type: "website",
   },
   robots: { index: false, follow: false },
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+    <html lang="id" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased bg-[#ffffff] text-[#111113] selection:bg-[#fef08a] selection:text-[#111113]">
         <AgentProvider>{children}</AgentProvider>
       </body>

@@ -135,7 +135,16 @@ test("calculateModelSwitchSavings correctly computes monthly and annual savings 
   assert.equal(res.targetModelId, "gemini-3.8-flash");
   assert.ok(res.isCheaper);
   assert.ok(res.wholesaleMonthlySavingsUsd > 0);
-  assert.ok(res.savingsPercent > 80);
+  // Based on the model registry rates, not a fixed claim from an old price list.
+  const sourceWeightedPrice = 0.35 * gpt4o.wholesaleInputPer1M +
+    0.65 * gpt4o.wholesaleOutputPer1M;
+  const targetWeightedPrice = 0.35 * gemini.wholesaleInputPer1M +
+    0.65 * gemini.wholesaleOutputPer1M;
+  const expectedSavingsPercent = Math.round(
+    100 * (sourceWeightedPrice - targetWeightedPrice) / sourceWeightedPrice
+  );
+  assert.equal(res.savingsPercent, expectedSavingsPercent);
+  assert.equal(res.wholesaleMonthlySavingsUsd, Number(((sourceWeightedPrice - targetWeightedPrice) * 10).toFixed(4)));
   assert.ok(res.latencyDeltaMs < 0); // Gemini is faster
   assert.ok(res.speedupPercent > 0);
   assert.equal(res.annualSavingsUsd, Number((res.wholesaleMonthlySavingsUsd * 12).toFixed(2)));

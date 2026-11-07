@@ -75,4 +75,53 @@ for (const style of ["emotional", "investor", "formal"]) {
   assert.ok(!draft.body.includes("120 m²"));
   assert.ok(!draft.body.includes("7-9%"));
 }
+const authStatus = await request("/api/auth/status");
+assert.equal(authStatus.response.status, 200);
+assert.equal(authStatus.body.enabled, false, "auth must not auto-enable in CI");
+
+const noSession = await request("/api/auth/me");
+assert.equal(noSession.response.status, 503);
+assert.equal(noSession.body.authenticated, false);
+
+const blockedCrossOrigin = await request("/api/auth/sign-in", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: "https://attacker.test" },
+  body: JSON.stringify({ email: "test@example.com", password: "example-password" }),
+});
+assert.equal(blockedCrossOrigin.response.status, 403);
+
+const backendAbsent = await request("/api/auth/sign-in", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ email: "test@example.com", password: "example-password" }),
+});
+assert.equal(backendAbsent.response.status, 503);
+
+const dbDisabled = await request("/api/private/listings");
+assert.equal(dbDisabled.response.status, 503);
+
+const logout = await request("/api/auth/sign-out", {
+  method: "POST",
+  headers: { Origin: base },
+});
+assert.equal(logout.response.status, 200);
+assert.match(logout.response.headers.get("set-cookie") || "", /codematt_access=/);
+assert.equal(logout.body.upstreamRevocation, "not-applicable");
+
+const spoofedLogout = await request("/api/auth/sign-out", {
+  method: "POST",
+  headers: { Origin: "https://attacker.test", Host: "attacker.test" },
+});
+assert.equal(spoofedLogout.response.status, 403);
+
+const absentSignup = await request("/api/auth/sign-up", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ name: "Demo", agency: "Agency", email: "demo@example.com", password: "password-123" }),
+});
+assert.equal(absentSignup.response.status, 503);
+
+assert.equal(health.response.headers.get("x-frame-options"), "DENY");
+
 console.log("HTTP smoke passed: health, demo gateway, input validation, fact-only listing.");
+console.log("Phase 2 smoke passed: auth fails closed, cross-origin blocked, isolated database disabled, logout clears cookie.");
