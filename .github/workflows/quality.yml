@@ -127,3 +127,16 @@ jobs:
             cat /tmp/codematt-live-gates.log
             exit 1
           fi
+
+      - name: Verify Netlify-style Next.js build without standalone output
+        shell: bash
+        env:
+          NETLIFY: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          rm -rf .next
+          bun run build
+          test -f .next/BUILD_ID
+          test ! -f .next/standalone/server.js
+          echo "Netlify-style Next.js build passed (adapter packaging not tested here)."
