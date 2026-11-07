@@ -17,9 +17,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codematt Agent — Unified Multi-Model AI Agent Platform",
+  title: "Codematt Agent | Demo Workspace AI Multi-Model",
   description:
-    "Minimalist multi-model AI agent workspace and commercial gateway integrating ChatGPT, Gemini, Claude, DeepSeek, and Llama under one personal master account.",
+    "Prototipe workspace agen AI multi-model untuk demonstrasi fitur, perbandingan model, dan konten properti. Koneksi AI live, akun, dan penyimpanan cloud nonaktif secara default.",
   openGraph: {
     title: "Codematt Agent — Unified Multi-Model AI Agent Platform",
     description:
