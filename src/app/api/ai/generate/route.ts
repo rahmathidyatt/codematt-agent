@@ -119,13 +119,13 @@ export async function POST(req: NextRequest) {
   if (!isLiveAiAuthorized(req.headers.get("authorization"))) {
     return NextResponse.json(
       { ok: false, code: "unauthorized", error: "LIVE_AI_AUTH_REQUIRED" },
-      { status: 401 }
+      { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
       { ok: false, code: "not-configured", error: "GEMINI_API_KEY_NOT_CONFIGURED" },
-      { status: 503 }
+      { status: 503, headers: { "Cache-Control": "no-store" } }
     );
   }
 
