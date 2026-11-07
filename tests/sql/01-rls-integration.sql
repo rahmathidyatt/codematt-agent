@@ -127,6 +127,32 @@ begin
 end $$;
 commit;
 
+-- USER B: legitimate UPDATE and DELETE of own data must keep working.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', true);
+do $
+declare n integer;
+begin
+  update public.codematt_listings set location = 'Konawe'
+  where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: B cannot update own listing'; end if;
+  update public.codematt_profiles set full_name = 'Bob Updated'
+  where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: B cannot update own profile'; end if;
+  delete from public.codematt_listings
+  where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: B cannot delete own listing'; end if;
+  delete from public.codematt_profiles
+  where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: B cannot delete own profile'; end if;
+end $;
+commit;
+
 -- ANON: table privileges are denied; policy does not grant access.
 begin;
 set local role anon;
@@ -163,7 +189,13 @@ begin
   if n <> 0 then raise exception 'FAIL: empty subject accessed listing'; end if;
   select count(*) into n from public.codematt_profiles;
   if n <> 0 then raise exception 'FAIL: empty subject accessed profile'; end if;
-end $$;
+  begin
+    insert into public.codematt_listings (user_id, name, location)
+    values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'No subject', 'Bogor');
+    raise exception 'FAIL: authenticated role without subject inserted listing';
+  exception when insufficient_privilege then null;
+  end;
+end $;
 commit;
 
 select 'LOCAL PostgreSQL RLS INTEGRATION PASS: two tenants, spoofing, updates, deletes, anonymous, missing subject' as result;
