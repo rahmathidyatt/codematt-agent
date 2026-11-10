@@ -95,10 +95,12 @@ export function ModelRegistryPanel({
 
   const categories = [
     { id: "all", label: "Semua Model" },
+    { id: "enabled", label: "Aktif" },
     { id: "Multimodal", label: "Multimodal" },
     { id: "Reasoning", label: "Penalaran" },
     { id: "Coding", label: "Koding" },
     { id: "Open-Weights", label: "Open-Weights" },
+    { id: "Fast", label: "Cepat / Fast" },
   ];
 
   return (
@@ -456,6 +458,25 @@ export function ModelRegistryPanel({
                 </tr>
               );
             })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-8 px-4 text-center text-xs text-[#52525b]">
+                  <div className="space-y-2">
+                    <p>Tidak ada model yang cocok dengan filter kategori atau kata kunci pencarian ini.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCategoryFilter("all");
+                        setSearchQuery("");
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-[#f5b800] text-[#111113] font-semibold cursor-pointer"
+                    >
+                      Tampilkan Semua Model
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

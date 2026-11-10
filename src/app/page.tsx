@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import {
   Send,
   RotateCcw,
@@ -16,6 +17,7 @@ import {
   Settings,
   Layers,
   MessageSquare,
+  Building2,
   X,
 } from "lucide-react";
 import {
@@ -23,6 +25,7 @@ import {
   AGENT_PERSONAS,
   INITIAL_CLIENT_KEYS,
   AIModelConfig,
+  AgentPersona,
   ChatTurn,
   ClientApiKey,
   calculateTokenEconomics,
@@ -80,6 +83,52 @@ function getCurrentTimeLabel(): string {
   return `${hh}:${mm}`;
 }
 
+function createWelcomeTurnForModel(model: AIModelConfig, agentId: string): ChatTurn {
+  return {
+    id: `turn-welcome-${model.id}`,
+    role: "assistant",
+    content: `### Mode Demo · ${model.name} (${model.provider})\n\nAnda sedang berada di tab ruang kerja **${model.name}** (${model.contextWindow} · kategori **${model.category}**). Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Keunggulan Utama**: ${model.strengths.join(" · ")}.\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B** dengan riwayat percakapan terpisah.`,
+    modelId: model.id,
+    modelName: model.name,
+    provider: model.provider,
+    agentId,
+    timestamp: "Baru saja",
+    tokensUsed: 0,
+    wholesaleCostUsd: 0,
+    retailChargeUsd: 0,
+    latencyMs: 0,
+  };
+}
+
+function buildInitialTurnsByModel(modelsList: AIModelConfig[], agentId: string): Record<string, ChatTurn[]> {
+  const map: Record<string, ChatTurn[]> = {};
+  for (const m of modelsList) {
+    map[m.id] = [createWelcomeTurnForModel(m, agentId)];
+  }
+  return map;
+}
+
+function buildCustomModelDemoResponse(
+  prompt: string,
+  model: AIModelConfig,
+  persona: AgentPersona
+) {
+  const content = [
+    `### MODE DEMO · Pratinjau Endpoint Kustom (${model.name})`,
+    `Respons simulasi dari endpoint **${model.modelSlug}** (${model.provider}) melalui peran **${persona.name}**.`,
+    `- **Permintaan Anda**: "${prompt}"`,
+    `- **Spesifikasi Model**: Kategori ${model.category} · Konteks ${model.contextWindow} · Markup ${model.retailMarkupMultiplier}x.`,
+  ].join("\n\n");
+  const inTok = Math.max(48, Math.round(prompt.length / 3.5) + 45);
+  const outTok = Math.max(120, Math.round(content.length / 3.8));
+  const economics = calculateTokenEconomics(model, inTok, outTok);
+  return {
+    content,
+    economics,
+    latencyMs: model.avgLatencyMs,
+  };
+}
+
 export default function MultiModelAgentPlatformPage() {
   const [models, setModels] = useState<AIModelConfig[]>(INITIAL_MODELS);
   const [selectedModelId, setSelectedModelId] = useState<string>("gemini-3.8-flash");
@@ -102,42 +151,59 @@ export default function MultiModelAgentPlatformPage() {
   const [selectedCoffeeId, setSelectedCoffeeId] = useState<string>("coffee-3");
   const [supporterName, setSupporterName] = useState<string>("");
   const [supporterMessage, setSupporterMessage] = useState<string>("");
-  const [coffeeCount] = useState<number>(0);
+  const [coffeeCount, setCoffeeCount] = useState<number>(0);
   const [coffeeThankYou, setCoffeeThankYou] = useState<string | null>(null);
 
   const promptInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [turns, setTurns] = useState<ChatTurn[]>([
-    {
-      id: "turn-welcome",
-      role: "assistant",
-      content:
-        "### Mode Demo · Agen AI\n\nAnda sedang berada di tab ruang kerja aktif. Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B**.\n- **Fokus & Minimalis**: Seluruh detail teknis yang tidak relevan dengan agen telah disembunyikan agar Anda bisa fokus penuh pada pekerjaan.",
-      modelId: "gemini-3.8-flash",
-      modelName: "Gemini 3.8 Flash",
-      provider: "Google DeepMind",
-      agentId: "agent-orchestrator",
-      timestamp: "Baru saja",
-      tokensUsed: 0,
-      wholesaleCostUsd: 0,
-      retailChargeUsd: 0,
-      latencyMs: 0,
-    },
-  ]);
+  const [turnsByModel, setTurnsByModel] = useState<Record<string, ChatTurn[]>>(() =>
+    buildInitialTurnsByModel(INITIAL_MODELS, AGENT_PERSONAS[0].id)
+  );
 
   const [telemetryProbes, setTelemetryProbes] = useState<ChatTurn[]>([]);
 
   const enabledModels = models.filter((m) => m.enabled);
   const activeModel =
-    models.find((m) => m.id === selectedModelId) || enabledModels[0] || models[0];
+    enabledModels.find((m) => m.id === selectedModelId) ||
+    enabledModels[0] ||
+    models[0];
   const secondaryModel =
-    models.find((m) => m.id === compareModelId) ||
+    enabledModels.find((m) => m.id === compareModelId && m.id !== activeModel.id) ||
     enabledModels.find((m) => m.id !== activeModel.id) ||
-    models[1];
+    models[1] ||
+    activeModel;
   const activePersona =
     AGENT_PERSONAS.find((a) => a.id === selectedAgentId) || AGENT_PERSONAS[0];
 
-  const sessionTelemetryTurns = [...telemetryProbes, ...turns];
+  const turns = turnsByModel[activeModel.id] || [
+    createWelcomeTurnForModel(activeModel, activePersona.id),
+  ];
+
+  const appendTurnForModel = (modelId: string, newTurn: ChatTurn) => {
+    setTurnsByModel((prev) => {
+      const existing = prev[modelId] || [
+        createWelcomeTurnForModel(
+          models.find((m) => m.id === modelId) || activeModel,
+          activePersona.id
+        ),
+      ];
+      return {
+        ...prev,
+        [modelId]: [...existing, newTurn],
+      };
+    });
+  };
+
+  const allConversationTurns = Object.values(turnsByModel)
+    .flat()
+    .filter(
+      (t) =>
+        t.role === "assistant" &&
+        !t.id.startsWith("turn-welcome") &&
+        !t.id.startsWith("turn-reset")
+    );
+
+  const sessionTelemetryTurns = [...telemetryProbes, ...allConversationTurns];
 
   const sessionTokens = sessionTelemetryTurns.reduce((acc, t) => acc + t.tokensUsed, 0);
   const sessionWholesaleUsd = sessionTelemetryTurns.reduce(
@@ -162,13 +228,16 @@ export default function MultiModelAgentPlatformPage() {
     const textToSend = (overridePrompt ?? promptInput).trim();
     if (!textToSend || loading) return;
 
+    const targetModel = activeModel;
+    const compareTarget = compareMode ? secondaryModel : null;
+
     const userTurn: ChatTurn = {
       id: createTurnId("usr"),
       role: "user",
       content: textToSend,
-      modelId: activeModel.id,
-      modelName: activeModel.name,
-      provider: activeModel.provider,
+      modelId: targetModel.id,
+      modelName: targetModel.name,
+      provider: targetModel.provider,
       agentId: activePersona.id,
       timestamp: getCurrentTimeLabel(),
       tokensUsed: 0,
@@ -177,9 +246,63 @@ export default function MultiModelAgentPlatformPage() {
       latencyMs: 0,
     };
 
-    setTurns((prev) => [...prev, userTurn]);
+    appendTurnForModel(targetModel.id, userTurn);
     setPromptInput("");
     setLoading(true);
+
+    // If custom model is used (not registered on server INITIAL_MODELS), run simulated gateway response locally
+    const isCustomPrimary = targetModel.id.startsWith("custom-");
+    const isCustomCompare = Boolean(compareTarget && compareTarget.id.startsWith("custom-"));
+
+    if (isCustomPrimary || isCustomCompare) {
+      const primarySim = buildCustomModelDemoResponse(textToSend, targetModel, activePersona);
+      const compareSim = compareTarget
+        ? buildCustomModelDemoResponse(textToSend, compareTarget, activePersona)
+        : null;
+
+      const assistantTurn: ChatTurn = {
+        id: createTurnId("ai"),
+        role: "assistant",
+        content: primarySim.content,
+        modelId: targetModel.id,
+        modelName: targetModel.name,
+        provider: targetModel.provider,
+        agentId: activePersona.id,
+        timestamp: getCurrentTimeLabel(),
+        tokensUsed: primarySim.economics.totalTokens + (compareSim ? compareSim.economics.totalTokens : 0),
+        wholesaleCostUsd:
+          primarySim.economics.wholesaleCostUsd + (compareSim ? compareSim.economics.wholesaleCostUsd : 0),
+        retailChargeUsd:
+          primarySim.economics.retailChargeUsd + (compareSim ? compareSim.economics.retailChargeUsd : 0),
+        latencyMs: primarySim.latencyMs,
+        comparisonResponses: compareSim && compareTarget
+          ? [
+              {
+                modelId: targetModel.id,
+                modelName: targetModel.name,
+                provider: targetModel.provider,
+                content: primarySim.content,
+                tokensUsed: primarySim.economics.totalTokens,
+                latencyMs: primarySim.latencyMs,
+                retailChargeUsd: primarySim.economics.retailChargeUsd,
+              },
+              {
+                modelId: compareTarget.id,
+                modelName: compareTarget.name,
+                provider: compareTarget.provider,
+                content: compareSim.content,
+                tokensUsed: compareSim.economics.totalTokens,
+                latencyMs: compareSim.latencyMs,
+                retailChargeUsd: compareSim.economics.retailChargeUsd,
+              },
+            ]
+          : undefined,
+      };
+
+      appendTurnForModel(targetModel.id, assistantTurn);
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/gateway", {
@@ -187,8 +310,8 @@ export default function MultiModelAgentPlatformPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: textToSend,
-          modelId: activeModel.id,
-          compareModelId: compareMode ? secondaryModel.id : null,
+          modelId: targetModel.id,
+          compareModelId: compareTarget ? compareTarget.id : null,
           agentId: activePersona.id,
           customSystemPrompt: customSystemPrompt || undefined,
         }),
@@ -198,6 +321,47 @@ export default function MultiModelAgentPlatformPage() {
       if (json.ok && json.primary) {
         const p = json.primary;
         const c = json.comparison;
+
+        // Calculate realistic simulated token economics in demo mode for session telemetry
+        const estInputTokens = Math.max(48, Math.round(textToSend.length / 3.5) + 45);
+        const estOutputTokens = Math.max(120, Math.round(String(p.content || "").length / 3.8));
+        const demoPrimaryEcon = calculateTokenEconomics(targetModel, estInputTokens, estOutputTokens);
+        const demoCompareEcon =
+          c && compareTarget
+            ? calculateTokenEconomics(
+                compareTarget,
+                estInputTokens,
+                Math.max(110, Math.round(String(c.content || "").length / 3.8))
+              )
+            : null;
+
+        const primaryTokens = p.tokensUsed > 0 ? p.tokensUsed : demoPrimaryEcon.totalTokens;
+        const primaryWholesale =
+          p.wholesaleCostUsd > 0 ? p.wholesaleCostUsd : demoPrimaryEcon.wholesaleCostUsd;
+        const primaryRetail =
+          p.retailChargeUsd > 0 ? p.retailChargeUsd : demoPrimaryEcon.retailChargeUsd;
+        const primaryLatency = p.latencyMs > 0 ? p.latencyMs : targetModel.avgLatencyMs;
+
+        const compareTokens = c
+          ? c.tokensUsed > 0
+            ? c.tokensUsed
+            : demoCompareEcon?.totalTokens || 0
+          : 0;
+        const compareWholesale = c
+          ? c.wholesaleCostUsd > 0
+            ? c.wholesaleCostUsd
+            : demoCompareEcon?.wholesaleCostUsd || 0
+          : 0;
+        const compareRetail = c
+          ? c.retailChargeUsd > 0
+            ? c.retailChargeUsd
+            : demoCompareEcon?.retailChargeUsd || 0
+          : 0;
+        const compareLatency = c
+          ? c.latencyMs > 0
+            ? c.latencyMs
+            : compareTarget?.avgLatencyMs || 420
+          : 0;
 
         const assistantTurn: ChatTurn = {
           id: createTurnId("ai"),
@@ -216,10 +380,10 @@ export default function MultiModelAgentPlatformPage() {
           provider: p.provider,
           agentId: activePersona.id,
           timestamp: getCurrentTimeLabel(),
-          tokensUsed: p.tokensUsed + (c ? c.tokensUsed : 0),
-          wholesaleCostUsd: p.wholesaleCostUsd + (c ? c.wholesaleCostUsd : 0),
-          retailChargeUsd: p.retailChargeUsd + (c ? c.retailChargeUsd : 0),
-          latencyMs: p.latencyMs,
+          tokensUsed: primaryTokens + compareTokens,
+          wholesaleCostUsd: Number((primaryWholesale + compareWholesale).toFixed(6)),
+          retailChargeUsd: Number((primaryRetail + compareRetail).toFixed(6)),
+          latencyMs: primaryLatency,
           comparisonResponses: c
             ? [
                 {
@@ -227,40 +391,40 @@ export default function MultiModelAgentPlatformPage() {
                   modelName: p.modelName,
                   provider: p.provider,
                   content: p.content,
-                  tokensUsed: p.tokensUsed,
-                  latencyMs: p.latencyMs,
-                  retailChargeUsd: p.retailChargeUsd,
+                  tokensUsed: primaryTokens,
+                  latencyMs: primaryLatency,
+                  retailChargeUsd: primaryRetail,
                 },
                 {
                   modelId: c.modelId,
                   modelName: c.modelName,
                   provider: c.provider,
                   content: c.content,
-                  tokensUsed: c.tokensUsed,
-                  latencyMs: c.latencyMs,
-                  retailChargeUsd: c.retailChargeUsd,
+                  tokensUsed: compareTokens,
+                  latencyMs: compareLatency,
+                  retailChargeUsd: compareRetail,
                 },
               ]
             : undefined,
         };
 
-        setTurns((prev) => [...prev, assistantTurn]);
+        appendTurnForModel(targetModel.id, assistantTurn);
       } else {
-        setTurns((prev) => [...prev, {
+        appendTurnForModel(targetModel.id, {
           ...userTurn,
           id: createTurnId("err"),
           role: "assistant",
           content: "⚠️ Gateway belum dapat memproses permintaan (" + String(json.error || "UNKNOWN_ERROR") + "). Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
-        }]);
+        });
       }
     } catch (err) {
       console.error("Gagal menjalankan permintaan model:", err);
-      setTurns((prev) => [...prev, {
+      appendTurnForModel(targetModel.id, {
         ...userTurn,
         id: createTurnId("err"),
         role: "assistant",
         content: "⚠️ Koneksi ke gateway gagal. Silakan coba lagi. Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
-      }]);
+      });
     } finally {
       setLoading(false);
     }
@@ -268,22 +432,25 @@ export default function MultiModelAgentPlatformPage() {
 
   const handleResetSession = () => {
     setTelemetryProbes([]);
-    setTurns([
-      {
-        id: createTurnId("turn-reset"),
-        role: "assistant",
-        content: `### Sesi Baru Dimulai · ${activeModel.name}\n\nSiap menerima instruksi Anda melalui peran **${activePersona.name}**. Silakan ketik pesan di bawah.`,
-        modelId: activeModel.id,
-        modelName: activeModel.name,
-        provider: activeModel.provider,
-        agentId: activePersona.id,
-        timestamp: "Baru saja",
-        tokensUsed: 0,
-        wholesaleCostUsd: 0,
-        retailChargeUsd: 0,
-        latencyMs: 0,
-      },
-    ]);
+    setTurnsByModel((prev) => ({
+      ...prev,
+      [activeModel.id]: [
+        {
+          id: createTurnId("turn-reset"),
+          role: "assistant",
+          content: `### Sesi Baru Dimulai · ${activeModel.name}\n\nSiap menerima instruksi Anda melalui peran **${activePersona.name}**. Silakan ketik pesan di bawah.`,
+          modelId: activeModel.id,
+          modelName: activeModel.name,
+          provider: activeModel.provider,
+          agentId: activePersona.id,
+          timestamp: "Baru saja",
+          tokensUsed: 0,
+          wholesaleCostUsd: 0,
+          retailChargeUsd: 0,
+          latencyMs: 0,
+        },
+      ],
+    }));
   };
 
   const handleRunBenchmarkSweep = () => {
@@ -326,9 +493,23 @@ export default function MultiModelAgentPlatformPage() {
   };
 
   const handleToggleModelEnabled = (id: string) => {
-    setModels((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
-    );
+    setModels((prev) => {
+      const target = prev.find((m) => m.id === id);
+      if (!target) return prev;
+      const currentlyEnabled = prev.filter((m) => m.enabled);
+      // Ensure at least one model stays enabled
+      if (target.enabled && currentlyEnabled.length <= 1) {
+        return prev;
+      }
+      const next = prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m));
+      if (target.enabled && selectedModelId === id) {
+        const nextEnabled = next.find((m) => m.enabled);
+        if (nextEnabled) {
+          setSelectedModelId(nextEnabled.id);
+        }
+      }
+      return next;
+    });
   };
 
   const handleUpdateMultiplier = (id: string, multiplier: number) => {
@@ -341,6 +522,10 @@ export default function MultiModelAgentPlatformPage() {
 
   const handleAddCustomModel = (newModel: AIModelConfig) => {
     setModels((prev) => [...prev, newModel]);
+    setTurnsByModel((prev) => ({
+      ...prev,
+      [newModel.id]: [createWelcomeTurnForModel(newModel, activePersona.id)],
+    }));
     handleSelectModelAndLaunch(newModel.id);
   };
 
@@ -378,6 +563,7 @@ export default function MultiModelAgentPlatformPage() {
     const chosen =
       COFFEE_TIERS.find((c) => c.id === selectedCoffeeId) || COFFEE_TIERS[1];
     const sender = supporterName.trim() || "Sahabat AI";
+    setCoffeeCount((prev) => prev + chosen.cups);
     setCoffeeThankYou(
       `Pratinjau untuk ${sender}: ${chosen.title} (${chosen.amountIdr}). Tidak ada transaksi pembayaran atau dukungan yang diterima melalui formulir demo ini.`
     );
@@ -389,7 +575,7 @@ export default function MultiModelAgentPlatformPage() {
     <div className="min-h-screen bg-white text-[#111113] flex flex-col justify-between">
       {/* Strict 3-Zone Minimalist Top Bar */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-[#e4e4e7]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           {/* Zone 1: Brand Wordmark */}
           <button
             type="button"
@@ -399,10 +585,10 @@ export default function MultiModelAgentPlatformPage() {
             Codematt Agent
           </button>
 
-          {/* Zone 2: Minimalist Tab Navigation (4 single-line links) */}
+          {/* Zone 2: Minimalist Tab Navigation */}
           <nav
             aria-label="Navigasi Utama"
-            className="hidden md:flex items-center gap-6 text-sm font-medium text-[#52525b]"
+            className="flex items-center gap-4 md:gap-6 text-xs md:text-sm font-medium text-[#52525b] overflow-x-auto py-1"
           >
             <button
               type="button"
@@ -454,8 +640,16 @@ export default function MultiModelAgentPlatformPage() {
             </button>
           </nav>
 
-          {/* Zone 3: Single Primary Action */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Zone 3: Primary Actions */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              href="/dashboard"
+              data-testid="nav-link-agent-suite"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#111113] bg-[#fafafa] hover:bg-[#f4f4f5] border border-[#e4e4e7] rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#f5b800]" />
+              <span>Studio Properti</span>
+            </Link>
             <button
               type="button"
               onClick={handleResetSession}

@@ -42,7 +42,10 @@ export function SessionTelemetryDashboard({
     const copy = [...summary.rows];
     if (sortBy === "tokens") {
       return copy.sort(
-        (a, b) => b.tokensUsed - a.tokensUsed || a.avgLatencyMs - b.avgLatencyMs
+        (a, b) =>
+          b.tokensUsed - a.tokensUsed ||
+          b.requestCount - a.requestCount ||
+          b.blendedWholesalePer1kUsd - a.blendedWholesalePer1kUsd
       );
     }
     if (sortBy === "efficiency") {

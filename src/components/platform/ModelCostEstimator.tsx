@@ -296,8 +296,14 @@ export function ModelCostEstimator({
             <select
               id="source-model-select"
               data-testid="source-model-select"
-              value={sourceModelId}
-              onChange={(e) => setSourceModelId(e.target.value)}
+              value={sourceModel.id}
+              onChange={(e) => {
+                const nextSource = e.target.value;
+                if (nextSource === targetModel.id) {
+                  setTargetModelId(sourceModel.id);
+                }
+                setSourceModelId(nextSource);
+              }}
               className="w-full px-3 py-2 rounded-lg bg-[#fafafa] border border-[#e4e4e7] text-xs font-bold text-[#111113]"
             >
               {enabledModels.map((m) => (
@@ -335,8 +341,14 @@ export function ModelCostEstimator({
             <select
               id="target-model-select"
               data-testid="target-model-select"
-              value={targetModelId}
-              onChange={(e) => setTargetModelId(e.target.value)}
+              value={targetModel.id}
+              onChange={(e) => {
+                const nextTarget = e.target.value;
+                if (nextTarget === sourceModel.id) {
+                  setSourceModelId(targetModel.id);
+                }
+                setTargetModelId(nextTarget);
+              }}
               className="w-full px-3 py-2 rounded-lg bg-white border border-[#f5b800] text-xs font-bold text-[#111113]"
             >
               {enabledModels.map((m) => (

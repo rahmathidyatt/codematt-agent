@@ -20,22 +20,78 @@ export default function ContentStudioPage() {
   const [platform, setPlatform] = useState<"instagram" | "tiktok" | "newsletter">("instagram");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [variationCount, setVariationCount] = useState(0);
 
   const activeListing = listings.find((l) => l.id === selectedListingId) || listings[0];
+
+  const buildDraftForPlatform = (
+    targetListing: typeof activeListing,
+    targetPlatform: "instagram" | "tiktok" | "newsletter",
+    variationIdx = 0,
+    aiExtraText?: string
+  ) => {
+    const priceM = ((targetListing?.price || 1850000000) / 1000000000).toFixed(2);
+    const locShort = (targetListing?.location || "Sentul").split(",")[0].trim();
+    const locTag = locShort.replace(/\s+/g, "");
+    const highlightsList = targetListing?.highlights?.slice(0, 3).join(", ") || "Lokasi strategis, bebas banjir, bisa KPR";
+
+    if (targetPlatform === "tiktok") {
+      const hooks = [
+        `[POV 0-3s] Jangan beli rumah di ${locShort} sebelum lihat unit ${targetListing?.name} seharga Rp ${priceM} M ini! 🎥✨`,
+        `[HOOK VISUAL] Spill rumah ${targetListing?.bedrooms} kamar tidur di ${locShort} yang cicilannya ramah dan legalitas ${targetListing?.certificate}! 🏡🔥`,
+      ];
+      return {
+        hook: hooks[variationIdx % hooks.length],
+        body: `[Scene 1 - Fasad & Carport (3-8s)]\nLihat sendiri lebar jalannya lega banget, lokasi di ${targetListing?.location}.\n\n[Scene 2 - Living Room & Kamar (8-18s)]\nLuas tanah ${targetListing?.landSize}m² dan bangunan ${targetListing?.buildingSize}m² dengan ${targetListing?.bedrooms} KT & ${targetListing?.bathrooms} KM. Keunggulan utama: ${highlightsList}.\n\n[Scene 3 - Call to Action (18-25s)]\nLegalitas sudah ${targetListing?.certificate} aman 100%. Klik link bio atau WA ${agent.name} (${agent.phone}) buat jadwal private viewing minggu ini!${aiExtraText ? `\n\nCatatan AI: ${aiExtraText}` : ""}`,
+        hashtags: ["#TikTokProperti", `#Rumah${locTag}`, "#HomeTourIndonesia", "#SpillRumah", "#BrightonRealEstate"],
+      };
+    }
+
+    if (targetPlatform === "newsletter") {
+      const hooks = [
+        `Subject: [Hot Listing ${locShort}] ${targetListing?.name} — Valuasi Rp ${priceM} Milyar (${targetListing?.certificate})`,
+        `Subject: Peluang Akuisisi Properti Pilihan di ${targetListing?.location} — ${targetListing?.name}`,
+      ];
+      return {
+        hook: hooks[variationIdx % hooks.length],
+        body: `Halo Bapak/Ibu Investor & Pencari Hunian,\n\nMinggu ini kami menghadirkan unit kurasi terbaik di koridor ${targetListing?.location}: ${targetListing?.name} (${targetListing?.type} · ${targetListing?.transactionType}).\n\n• Harga Penawaran: Rp ${priceM} Milyar\n• Dimensi: LT ${targetListing?.landSize} m² / LB ${targetListing?.buildingSize} m² (${targetListing?.bedrooms} KT, ${targetListing?.bathrooms} KM)\n• Legalitas: ${targetListing?.certificate}\n• Daya Tarik Utama: ${highlightsList}\n\nUnit ini sangat direkomendasikan baik untuk hunian keluarga maupun instrumen capital gain jangka menengah. Balas email/pesan ini untuk menerima brosur PDF 300 DPI dan jadwal kunjungan lokasi bersama ${agent.name}.${aiExtraText ? `\n\nRingkasan Analis: ${aiExtraText}` : ""}`,
+        hashtags: ["#MarketUpdate", `#Investasi${locTag}`, "#NewsletterProperti", "#PortofolioProperti"],
+      };
+    }
+
+    const igHooks = [
+      `Rumah impian di ${targetListing?.location} cuma Rp ${priceM} M? Ini 3 alasan kenapa unit ${targetListing?.name} bakal cepat sold out! 👇`,
+      `Cari ${targetListing?.type.toLowerCase()} siap huni di ${locShort} dengan legalitas ${targetListing?.certificate}? Cek spesifikasi lengkap ${targetListing?.name} di slide berikut! ✨`,
+    ];
+    return {
+      hook: igHooks[variationIdx % igHooks.length],
+      body: `1. Lokasi super strategis di ${targetListing?.location} (${highlightsList}).\n2. Bangunan seluas ${targetListing?.buildingSize}m² (LT ${targetListing?.landSize}m²) dengan ${targetListing?.bedrooms} kamar tidur & ${targetListing?.bathrooms} kamar mandi.\n3. Legalitas sudah ${targetListing?.certificate} aman 100% dan bisa KPR dibantu sampai approved.\n\nJangan tunggu harga naik! Jadwalkan survei privat minggu ini sebelum keduluan pembeli lain.${aiExtraText ? `\n\nHighlight Tambahan: ${aiExtraText}` : ""}`,
+      hashtags: ["#RumahDijual", `#Properti${locTag}`, "#InspirasiRumah", "#RumahMinimalis", "#AgenProperti"],
+    };
+  };
 
   const [contentOutput, setContentOutput] = useState<{
     hook: string;
     body: string;
     hashtags: string[];
-  }>({
-    hook: `Rumah impian di ${activeListing?.location} cuma Rp ${(activeListing?.price / 1000000000).toFixed(2)} M? Ini 3 alasan kenapa unit ini bakal cepat sold out! 👇`,
-    body: `1. Lokasi super strategis bebas banjir dan dekat akses gerbang tol.\n2. Bangunan 2 lantai seluas ${activeListing?.buildingSize}m² dengan ${activeListing?.bedrooms} kamar tidur.\n3. Legalitas sudah ${activeListing?.certificate} aman 100% dan bisa KPR dibantu sampai approved.\n\nJangan tunggu harga naik! Jadwalkan survei privat minggu ini sebelum keduluan pembeli lain.`,
-    hashtags: ["#RumahDijual", `#Properti${activeListing?.location.split(" ")[0]}`, "#InspirasiRumah", "#RumahMinimalis", "#AgenProperti"],
-  });
+  }>(() => buildDraftForPlatform(activeListing, "instagram", 0));
+
+  const handleSelectPlatform = (nextPlatform: "instagram" | "tiktok" | "newsletter") => {
+    setPlatform(nextPlatform);
+    setContentOutput(buildDraftForPlatform(activeListing, nextPlatform, variationCount));
+  };
+
+  const handleSelectListingChange = (nextListingId: string) => {
+    setSelectedListingId(nextListingId);
+    const nextListing = listings.find((l) => l.id === nextListingId) || listings[0];
+    setContentOutput(buildDraftForPlatform(nextListing, platform, variationCount));
+  };
 
   const handleGenerate = async () => {
     setLoading(true);
     recordAiUsage();
+    const nextVariation = variationCount + 1;
+    setVariationCount(nextVariation);
 
     try {
       const response = await fetch("/api/ai/generate", {
@@ -57,10 +113,19 @@ export default function ContentStudioPage() {
 
       const json = await response.json();
       if (json.ok && json.data) {
-        if (json.data.hook) setContentOutput(json.data);
+        if (json.data.hook) {
+          setContentOutput(json.data);
+        } else {
+          setContentOutput(
+            buildDraftForPlatform(activeListing, platform, nextVariation, json.data.text)
+          );
+        }
+      } else {
+        setContentOutput(buildDraftForPlatform(activeListing, platform, nextVariation));
       }
     } catch (e) {
       console.error(e);
+      setContentOutput(buildDraftForPlatform(activeListing, platform, nextVariation));
     } finally {
       setLoading(false);
     }
@@ -98,8 +163,9 @@ export default function ContentStudioPage() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setPlatform(p.id as "instagram" | "tiktok" | "newsletter")}
-                    className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                    data-testid={`platform-tab-${p.id}`}
+                    onClick={() => handleSelectPlatform(p.id as "instagram" | "tiktok" | "newsletter")}
+                    className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                       platform === p.id
                         ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold shadow-xs"
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
@@ -117,7 +183,7 @@ export default function ContentStudioPage() {
                 <label className="font-semibold text-[var(--text)] block mb-1">Pilih Properti:</label>
                 <select
                   value={selectedListingId}
-                  onChange={(e) => setSelectedListingId(e.target.value)}
+                  onChange={(e) => handleSelectListingChange(e.target.value)}
                   className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)]"
                 >
                   {listings.map((l) => (
@@ -132,7 +198,7 @@ export default function ContentStudioPage() {
                 type="button"
                 onClick={handleGenerate}
                 disabled={loading}
-                className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50"
+                className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 <span>{loading ? "Menyusun Konten..." : "Generate Konten Media Sosial"}</span>

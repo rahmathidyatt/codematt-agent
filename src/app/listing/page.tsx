@@ -14,51 +14,71 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
-import { useAgentStore } from "@/lib/store";
+import { useAgentStore, PropertyListing } from "@/lib/store";
 
-const INITIAL_RESULTS = {
-  emotional: {
-    headline: "Tempat Pulang Ternyaman: Rumah Modern Tropis di Sentul City",
-    body: "Bayangkan memulai hari dengan udara sejuk dan suasana asri yang menenangkan keluarga Anda. Hunian ini hadir dengan tata ruang lapang seluas 145 m² di atas tanah 120 m², dirancang sempurna dengan 3 kamar tidur dan 2 kamar mandi untuk kehangatan setiap momen kebersamaan. Terletak di kawasan prestisius Sentul City dengan keamanan 24 jam dan akses lingkungan yang ramah anak.",
-    bullets: [
-      "Sertifikat: SHM (Sertifikat Hak Milik) — Legalitas Aman",
-      "Spesifikasi: Luas Tanah 120 m² · Luas Bangunan 145 m²",
-      "Kapasitas: 3 Kamar Tidur · 2 Kamar Mandi",
-      "Lingkungan hijau, asri, dan bebas banjir",
-      "Penawaran Istimewa: Rp 1.85 Milyar (Bisa KPR dibantu tuntas)",
-    ],
-    cta: "Jadwalkan kunjungan privat Anda hari ini sebelum unit terbaik ini terjual!",
-  },
-  investor: {
-    headline: "Peluang Investasi Properti Emas: Yield Tinggi di Sentul City",
-    body: "Aset properti prima dengan potensi capital gain signifikan di koridor berkembang Sentul City. Ditawarkan dengan valuasi menarik Rp 1.85 Milyar, properti berlegalitas SHM ini memiliki luas bangunan 145 m² di atas tanah 120 m². Sangat ideal untuk disewakan maupun ditinggali jangka panjang dengan tingkat apresiasi harga tanah yang konsisten meningkat setiap tahunnya.",
-    bullets: [
-      "Valuasi: Rp 1.85 Milyar (Estimasi rental yield 7-9% / tahun)",
-      "Legalitas: SHM (Clear & Clean, siap AJB)",
-      "Dimensi Efisien: LT 120 m² · LB 145 m² (3 KT / 2 KM)",
-      "Aksesibilitas prima dekat gerbang tol dan pusat perbelanjaan",
-      "Opsi pembayaran fleksibel: Cash Keras, Cash Bertahap, atau KPR",
-    ],
-    cta: "Hubungi konsultan kami untuk perhitungan simulasi ROI dan penjadwalan survei.",
-  },
-  formal: {
-    headline: "DIJUAL: Rumah Modern Tropis — Sentul City (Rp 1.85 Milyar)",
-    body: "Dijual unit properti siap huni berlokasi di Sentul City, Babakan Madang, Bogor. Bangunan kokoh 2 lantai dengan luas tanah 120 m² dan luas bangunan 145 m². Dilengkapi 3 kamar tidur, 2 kamar mandi, dan area parkir mobil luas. Berada di lingkungan tertata dengan one gate system security 24 jam dan infrastruktur bawah tanah.",
-    bullets: [
-      "Harga: Rp 1.85 Milyar",
-      "Lokasi: Sentul City, Babakan Madang, Bogor",
-      "Sertifikat: SHM (Sertifikat Hak Milik)",
-      "Luas Tanah: 120 m² | Luas Bangunan: 145 m²",
-      "Kamar Tidur: 3 | Kamar Mandi: 2",
-    ],
-    cta: "Info detail, simulasi KPR, dan survei lokasi hubungi kontak agen resmi.",
-  },
-};
+function buildResultsForListing(listing?: PropertyListing) {
+  const name = listing?.name || "Cluster Sentul Hills";
+  const loc = listing?.location || "Sentul City, Bogor";
+  const priceM = ((listing?.price || 1850000000) / 1000000000).toFixed(2);
+  const lt = listing?.landSize || 120;
+  const lb = listing?.buildingSize || 145;
+  const kt = listing?.bedrooms || 3;
+  const km = listing?.bathrooms || 2;
+  const cert = listing?.certificate || "SHM (Sertifikat Hak Milik)";
+  const highlights = listing?.highlights?.join(", ") || "Row jalan 8 meter, View gunung, Bebas banjir, Bisa KPR";
+
+  return {
+    emotional: {
+      headline: `Tempat Pulang Ternyaman: ${name} di ${loc}`,
+      body: `Bayangkan memulai hari dengan suasana nyaman yang menenangkan keluarga Anda di ${name}. Hunian ini hadir dengan tata ruang lapang seluas ${lb} m² di atas tanah ${lt} m², dirancang sempurna dengan ${kt} kamar tidur dan ${km} kamar mandi untuk kehangatan setiap momen kebersamaan. Terletak di kawasan strategis ${loc} dengan keunggulan: ${highlights}.`,
+      bullets: [
+        `Sertifikat: ${cert} — Legalitas Aman`,
+        `Spesifikasi: Luas Tanah ${lt} m² · Luas Bangunan ${lb} m²`,
+        `Kapasitas: ${kt} Kamar Tidur · ${km} Kamar Mandi`,
+        `Keunggulan: ${highlights}`,
+        `Penawaran Istimewa: Rp ${priceM} Milyar (Bisa KPR dibantu tuntas)`,
+      ],
+      cta: "Jadwalkan kunjungan privat Anda hari ini sebelum unit terbaik ini terjual!",
+    },
+    investor: {
+      headline: `Peluang Investasi Properti Emas: ${name} (${loc})`,
+      body: `Aset properti prima dengan potensi capital gain signifikan di koridor berkembang ${loc}. Ditawarkan dengan valuasi menarik Rp ${priceM} Milyar, properti berlegalitas ${cert} ini memiliki luas bangunan ${lb} m² di atas tanah ${lt} m². Sangat ideal untuk disewakan maupun ditinggali jangka panjang (${highlights}).`,
+      bullets: [
+        `Valuasi: Rp ${priceM} Milyar (Potensi rental yield kompetitif)`,
+        `Legalitas: ${cert} (Clear & Clean, siap AJB)`,
+        `Dimensi Efisien: LT ${lt} m² · LB ${lb} m² (${kt} KT / ${km} KM)`,
+        `Keunggulan Lokasi: ${highlights}`,
+        `Opsi pembayaran fleksibel: Cash Keras, Cash Bertahap, atau KPR`,
+      ],
+      cta: "Hubungi konsultan kami untuk perhitungan simulasi ROI dan penjadwalan survei.",
+    },
+    formal: {
+      headline: `${(listing?.transactionType || "DIJUAL").toUpperCase()}: ${name} — ${loc} (Rp ${priceM} Milyar)`,
+      body: `Dipasarkan unit ${listing?.type || "Properti"} siap transaksi berlokasi di ${loc}. Memiliki luas tanah ${lt} m² dan luas bangunan ${lb} m², dilengkapi ${kt} kamar tidur dan ${km} kamar mandi. Fasilitas & daya tarik utama: ${highlights}.`,
+      bullets: [
+        `Harga: Rp ${priceM} Milyar`,
+        `Lokasi: ${loc}`,
+        `Sertifikat: ${cert}`,
+        `Luas Tanah: ${lt} m² | Luas Bangunan: ${lb} m²`,
+        `Kamar Tidur: ${kt} | Kamar Mandi: ${km}`,
+      ],
+      cta: "Info detail, simulasi KPR, dan survei lokasi hubungi kontak agen resmi.",
+    },
+  };
+}
 
 export default function ListingWriterPage() {
   const { listings, agent, locale, recordAiUsage } = useAgentStore();
 
-  const [selectedListingId, setSelectedListingId] = useState<string>(listings[0]?.id || "");
+  const [selectedListingId, setSelectedListingId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const idParam = new URLSearchParams(window.location.search).get("id");
+      if (idParam && listings.some((l) => l.id === idParam)) {
+        return idParam;
+      }
+    }
+    return listings[0]?.id || "";
+  });
   const activeListing = listings.find((l) => l.id === selectedListingId) || listings[0];
 
   // Custom Form State
@@ -86,7 +106,7 @@ export default function ListingWriterPage() {
     emotional?: { headline: string; body: string; bullets: string[]; cta: string };
     investor?: { headline: string; body: string; bullets: string[]; cta: string };
     formal?: { headline: string; body: string; bullets: string[]; cta: string };
-  } | null>(INITIAL_RESULTS);
+  } | null>(() => buildResultsForListing(activeListing));
 
   const handleSelectPreload = (id: string) => {
     setSelectedListingId(id);
@@ -106,6 +126,7 @@ export default function ListingWriterPage() {
         highlights: chosen.highlights.join(", "),
         notes: chosen.notes || "",
       });
+      setResults(buildResultsForListing(chosen));
     }
   };
 

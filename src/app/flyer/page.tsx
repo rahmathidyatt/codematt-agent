@@ -46,7 +46,15 @@ export default function FlyerStudioPage() {
   } = useAgentStore();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [selectedListingId, setSelectedListingId] = useState<string>(listings[0]?.id || "");
+  const [selectedListingId, setSelectedListingId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const listingIdParam = new URLSearchParams(window.location.search).get("listingId");
+      if (listingIdParam && listings.some((l) => l.id === listingIdParam)) {
+        return listingIdParam;
+      }
+    }
+    return listings[0]?.id || "";
+  });
   const activeListing = listings.find((l) => l.id === selectedListingId) || listings[0];
 
   // Flyer Configuration State
