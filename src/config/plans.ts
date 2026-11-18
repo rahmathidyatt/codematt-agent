@@ -69,7 +69,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     quotas: { chat: 10_000, ai_photo: 1_000 },
     providers: ["google", "openai", "anthropic"],
     highlights: [
-      "Untuk kantor / tim agen",
+      "Untuk kantor atau tim agen",
       "Kuota bersama, harga sesuai kesepakatan",
       "Hubungi admin untuk aktivasi",
     ],

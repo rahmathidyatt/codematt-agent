@@ -83,7 +83,7 @@ export default function AssistantPage() {
       <div className="max-w-4xl mx-auto space-y-5">
         {billing.mode === "demo" && !billing.loading && (
           <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs text-[var(--text)]">
-            <strong>Mode demo.</strong> Server belum mengaktifkan AI live, jadi jawaban di bawah hanya contoh dan tidak memotong kuota.
+            <strong>Mode demo.</strong> AI belum diaktifkan oleh admin, jadi jawaban di bawah hanya contoh dan tidak memotong kuota.
           </div>
         )}
         {billing.mode === "signed-out" && (
@@ -172,7 +172,7 @@ export default function AssistantPage() {
                   <p>{m.text}</p>
                   {m.role === "assistant" && m.provider && !m.failed && (
                     <div className="mt-1.5 text-[10px] font-mono text-[var(--muted)]">
-                      {PROVIDER_LABELS[m.provider]}{m.model && m.model !== "demo" ? ` · ${m.model}` : " · demo"}
+                      {PROVIDER_LABELS[m.provider]}{m.model === "demo" ? " · contoh" : ""}
                     </div>
                   )}
                 </div>

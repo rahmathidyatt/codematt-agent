@@ -21,7 +21,7 @@ export const RESIZE_PRESETS: readonly ResizePreset[] = [
   { id: "listing-landscape", label: "Listing portal 1200×800 (3:2)", width: 1200, height: 800, mode: "cover", format: "image/jpeg", quality: 0.85 },
   { id: "ig-feed", label: "Instagram feed 1080×1080", width: 1080, height: 1080, mode: "cover", format: "image/jpeg", quality: 0.9 },
   { id: "ig-portrait", label: "Instagram portrait 1080×1350", width: 1080, height: 1350, mode: "cover", format: "image/jpeg", quality: 0.9 },
-  { id: "story", label: "Story / Reels 1080×1920", width: 1080, height: 1920, mode: "cover", format: "image/jpeg", quality: 0.9 },
+  { id: "story", label: "Story dan Reels 1080×1920", width: 1080, height: 1920, mode: "cover", format: "image/jpeg", quality: 0.9 },
   { id: "whatsapp", label: "WhatsApp hemat (maks 1600 px)", width: 1600, height: 1600, mode: "fit", maxOnly: true, format: "image/jpeg", quality: 0.8 },
 ];
 

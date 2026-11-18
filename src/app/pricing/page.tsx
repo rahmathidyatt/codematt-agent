@@ -56,7 +56,7 @@ export default function PricingPage() {
           <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs">
             {billing.mode === "signed-out"
               ? <>Silakan <Link href="/login" className="underline font-bold">login</Link> untuk berlangganan.</>
-              : "Pembayaran belum aktif di server ini (mode demo). Tombol beli akan aktif setelah Supabase dan Midtrans dikonfigurasi."}
+              : "Pembayaran belum dibuka. Tombol beli akan aktif setelah admin menyalakan pembayaran."}
           </div>
         )}
         {error && <div role="alert" className="p-3 rounded-xl border border-rose-500/40 bg-rose-500/10 text-xs">{error}</div>}
@@ -79,7 +79,7 @@ export default function PricingPage() {
                   </div>
                   <p className="mt-2 text-2xl font-black text-[var(--text)]">
                     {plan.purchasable ? formatRupiah(plan.priceIdr) : id === "free" ? "Gratis" : "Hubungi kami"}
-                    {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> / 30 hari</span>}
+                    {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> per 30 hari</span>}
                   </p>
                 </div>
                 <ul className="space-y-1.5 text-xs text-[var(--text)] flex-1">

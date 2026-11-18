@@ -235,7 +235,7 @@ export default function LandingPage() {
                     <h3 className="font-black">{plan.name}</h3>
                     <p className="mt-2 text-2xl font-black">
                       {plan.purchasable ? formatRupiah(plan.priceIdr) : id === "free" ? "Gratis" : "Hubungi kami"}
-                      {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> / 30 hari</span>}
+                      {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> per 30 hari</span>}
                     </p>
                     <ul className="mt-4 space-y-1.5 text-sm flex-1">
                       {plan.highlights.map((h) => (

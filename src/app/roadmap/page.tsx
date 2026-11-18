@@ -8,16 +8,16 @@ type Status = "done" | "ready" | "planned";
 
 /** Honest status. "ready" = code exists but needs real keys + testing on the dedicated project. */
 const ITEMS: { title: string; status: Status; note: string }[] = [
-  { title: "Workspace agen (listing, flyer, follow-up, brand kit)", status: "done", note: "Berjalan di browser, data contoh disimpan di localStorage." },
-  { title: "Resize & kompres foto listing", status: "done", note: "Di browser, gratis, tanpa AI." },
-  { title: "Login Supabase Auth", status: "ready", note: "Aktif setelah env CODEMATT_AUTH_ENABLED dan kunci Supabase diisi." },
-  { title: "Chat multi-AI: Gemini, ChatGPT, Claude", status: "ready", note: "Adapter server sudah ada; butuh API key dan uji dengan akun nyata." },
-  { title: "Deteksi & hapus nomor rumah / telepon dengan AI", status: "ready", note: "Gemini/OpenAI image edit; hanya area yang ditandai yang diganti." },
-  { title: "Paket langganan + kuota bulanan di database", status: "ready", note: "Migrasi SQL + uji RLS di CI; perlu di-apply ke proyek Supabase Codematt." },
-  { title: "Pembayaran Midtrans (Snap)", status: "ready", note: "Perlu uji sandbox end-to-end sebelum mode produksi." },
-  { title: "Penyimpanan listing & foto per akun di Supabase", status: "planned", note: "Saat ini masih localStorage." },
-  { title: "Perpanjangan otomatis / auto-debit", status: "planned", note: "Sekarang bayar manual per 30 hari." },
-  { title: "Paket Team (kuota bersama satu kantor)", status: "planned", note: "Aktivasi manual oleh admin untuk sementara." },
+  { title: "Workspace agen (listing, flyer, follow-up, brand kit)", status: "done", note: "Sudah bisa dipakai. Data masih tersimpan di browser masing-masing." },
+  { title: "Resize & kompres foto listing", status: "done", note: "Gratis untuk semua paket." },
+  { title: "Daftar & login akun", status: "ready", note: "Menunggu diaktifkan oleh admin." },
+  { title: "Chat multi-AI: Gemini, ChatGPT, Claude", status: "ready", note: "Sedang diuji sebelum dibuka untuk semua pengguna." },
+  { title: "Deteksi & hapus nomor rumah / telepon dengan AI", status: "ready", note: "Sedang diuji. Hanya area yang ditandai yang diubah." },
+  { title: "Paket langganan + kuota bulanan di database", status: "ready", note: "Sedang diuji." },
+  { title: "Pembayaran lewat Midtrans", status: "ready", note: "Sedang diuji dengan transaksi percobaan." },
+  { title: "Listing & foto tersimpan di akun", status: "planned", note: "Supaya bisa dibuka dari perangkat lain." },
+  { title: "Perpanjangan otomatis / auto-debit", status: "planned", note: "Untuk sementara bayar per 30 hari." },
+  { title: "Paket Team (kuota bersama satu kantor)", status: "planned", note: "Untuk sementara diaktifkan oleh admin." },
 ];
 
 const META: Record<Status, { label: string; Icon: typeof CheckCircle2; className: string }> = {

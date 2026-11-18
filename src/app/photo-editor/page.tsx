@@ -544,7 +544,7 @@ export default function PropertyPhotoEditorPage() {
       void billing.refresh();
       showToast(boxes.length
         ? `${boxes.length} area terdeteksi. Klik salah satu atau hapus semuanya.`
-        : "Tidak ada nomor rumah / telepon yang terdeteksi.");
+        : "Tidak ada nomor rumah, nomor telepon, atau plat yang terdeteksi.");
     } catch {
       setInstructionError(errorMessage(null));
     } finally {
@@ -937,7 +937,7 @@ export default function PropertyPhotoEditorPage() {
                 className="w-full py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] font-bold flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {aiBusy === "detect" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4 text-[var(--accent)]" />}
-                <span>Deteksi otomatis nomor rumah / telepon / plat</span>
+                <span>Deteksi otomatis nomor rumah, telepon, dan plat</span>
               </button>
               {detectedBoxes.length > 0 && (
                 <div className="space-y-1.5">

@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
       provider,
       model: "demo",
       reply:
-        `[MODE DEMO] Live AI belum diaktifkan di server, jadi pesan ini tidak dikirim ke ${PROVIDER_LABELS[provider]}. ` +
-        "Admin perlu mengisi API key, Supabase Auth, dan CODEMATT_ENABLE_LIVE_AI=true. Lihat docs/BILLING.md.",
+        `Mode demo: ${PROVIDER_LABELS[provider]} belum diaktifkan oleh admin, jadi pesan ini belum dikirim ke AI. ` +
+        "Jawaban ini hanya contoh dan tidak memotong kuota.",
       usage: { used: 0, limit: 0 },
     });
   }
