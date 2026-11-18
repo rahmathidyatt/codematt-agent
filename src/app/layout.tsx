@@ -17,13 +17,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codematt Agent | Demo Workspace AI Multi-Model",
+  title: "Codematt Agent | Workspace AI untuk agen properti",
   description:
-    "Prototipe workspace agen AI multi-model untuk demonstrasi fitur, perbandingan model, dan konten properti. Koneksi AI live, akun, dan penyimpanan cloud nonaktif secara default.",
+    "Hapus nomor rumah dan telepon dari foto listing, resize untuk portal dan Instagram, dan tulis listing serta follow-up dengan Gemini, ChatGPT, atau Claude.",
   openGraph: {
-    title: "Codematt Agent | Demo Workspace AI Multi-Model",
+    title: "Codematt Agent | Workspace AI untuk agen properti",
     description:
-      "Prototipe workspace AI multi-model. Simulasi katalog dan pemakaian AI, tanpa pemrosesan pembayaran atau layanan produksi.",
+      "Edit foto listing dengan AI dan tulis pesan klien dengan Gemini, ChatGPT, atau Claude. Beta tertutup.",
     type: "website",
   },
   robots: { index: false, follow: false },

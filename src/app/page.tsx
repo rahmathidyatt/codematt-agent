@@ -1,1428 +1,300 @@
-"use client";
-
-import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
-  Send,
-  RotateCcw,
-  Check,
-  Copy,
-  SlidersHorizontal,
-  Columns2,
   ArrowRight,
-  Coffee,
-  Heart,
-  Sparkles,
-  BarChart3,
-  Settings,
-  Layers,
+  Bot,
+  Check,
+  Crop,
+  FileText,
   MessageSquare,
-  Building2,
-  X,
+  Palette,
+  Scan,
+  ShieldCheck,
+  Wand2,
 } from "lucide-react";
-import {
-  INITIAL_MODELS,
-  AGENT_PERSONAS,
-  INITIAL_CLIENT_KEYS,
-  AIModelConfig,
-  AgentPersona,
-  ChatTurn,
-  ClientApiKey,
-  calculateTokenEconomics,
-} from "@/features/platform/model-gateway";
-import { SessionTelemetryDashboard } from "@/components/platform/SessionTelemetryDashboard";
-import { ModelRegistryPanel } from "@/components/platform/ModelRegistryPanel";
-import { CommercialHubPanel } from "@/components/platform/CommercialHubPanel";
+import { PLAN_ORDER, PLANS, PROVIDER_LABELS, formatRupiah } from "@/config/plans";
 
-const OWNER_EMAIL = "akun belum terhubung (demo)";
-
-type ActiveTabView = "models" | "workspace" | "telemetry" | "owner";
-
-interface CoffeeTier {
-  id: string;
-  cups: number;
-  title: string;
-  amountIdr: string;
-  caption: string;
-}
-
-const COFFEE_TIERS: CoffeeTier[] = [
+const FEATURES = [
   {
-    id: "coffee-1",
-    cups: 1,
-    title: "1 Gelas Espresso",
-    amountIdr: "Rp 25.000",
-    caption: "Suntikan semangat koding malam",
+    icon: Bot,
+    title: "Tanya tiga AI di satu tempat",
+    body: "Gemini, ChatGPT, dan Claude dalam satu jendela chat. Pilih yang paling cocok untuk skrip negosiasi, jawaban keberatan klien, atau penjelasan SHM dan HGB.",
   },
   {
-    id: "coffee-3",
-    cups: 3,
-    title: "3 Gelas Golden Latte",
-    amountIdr: "Rp 75.000",
-    caption: "Bantu biaya eksperimen model AI baru",
+    icon: Scan,
+    title: "Hapus nomor rumah & telepon",
+    body: "AI menandai nomor rumah, nomor HP di spanduk lama, dan plat kendaraan. Satu klik untuk membersihkannya; bagian foto lain tidak ikut berubah.",
   },
   {
-    id: "coffee-5",
-    cups: 5,
-    title: "5 Gelas Cold Brew",
-    amountIdr: "Rp 125.000",
-    caption: "Pendukung utama pengembangan platform",
+    icon: Crop,
+    title: "Resize sekali klik",
+    body: "Ukuran siap pakai untuk portal listing, feed dan story Instagram, atau versi hemat untuk WhatsApp. Gratis, tanpa kuota.",
+  },
+  {
+    icon: FileText,
+    title: "Listing, flyer, follow-up",
+    body: "Draf deskripsi listing dari data yang Anda isi, flyer dengan QR, dan pesan follow-up WhatsApp. AI tidak menambahkan fakta yang tidak Anda berikan.",
   },
 ];
 
-let turnCounter = 1000;
-function createTurnId(prefix: string): string {
-  turnCounter += 1;
-  return `${prefix}-${turnCounter}`;
-}
+const STEPS = [
+  { title: "Daftar gratis", body: "Akun baru langsung dapat paket Free: chat Gemini dan 3 edit foto AI per bulan." },
+  { title: "Kerjakan listing", body: "Unggah foto, bersihkan, ubah ukuran, lalu tulis deskripsi dan flyer dari data properti." },
+  { title: "Upgrade kalau perlu", body: "Butuh ChatGPT, Claude, atau kuota lebih besar? Bayar per 30 hari lewat Midtrans." },
+];
 
-function getCurrentTimeLabel(): string {
-  const d = new Date();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
+const FAQ = [
+  {
+    q: "Apakah jawaban AI selalu benar?",
+    a: "Tidak. AI bisa keliru, terutama soal harga, legalitas, pajak, dan hitungan KPR. Cek ulang sebelum dikirim ke klien.",
+  },
+  {
+    q: "Foto saya dipakai untuk apa?",
+    a: "Foto dikirim ke penyedia AI hanya saat Anda menekan deteksi atau hapus. Pakai hanya foto milik Anda atau kantor Anda, bukan foto listing agen lain.",
+  },
+  {
+    q: "Bagaimana cara bayarnya?",
+    a: "Lewat Midtrans: QRIS, transfer virtual account, e-wallet, atau kartu. Satu pembayaran berlaku 30 hari dan tidak ada potong otomatis.",
+  },
+  {
+    q: "Kalau kuota habis?",
+    a: "Kuota direset setiap tanggal 1 (WIB). Kalau penyedia AI gagal menjawab, kuota Anda tidak dipotong.",
+  },
+];
 
-function createWelcomeTurnForModel(model: AIModelConfig, agentId: string): ChatTurn {
-  return {
-    id: `turn-welcome-${model.id}`,
-    role: "assistant",
-    content: `### Mode Demo · ${model.name} (${model.provider})\n\nAnda sedang berada di tab ruang kerja **${model.name}** (${model.contextWindow} · kategori **${model.category}**). Ketik instruksi di bawah atau pilih salah satu topik cepat untuk mulai bekerja.\n\n- **Keunggulan Utama**: ${model.strengths.join(" · ")}.\n- **Pindah Model Instan**: Klik tab model di bagian atas kapan saja untuk berganti antara **Gemini 3.8 Flash**, **ChatGPT (GPT-4o)**, **Claude 3.7 Sonnet**, **DeepSeek R1**, atau **Llama 3.3 70B** dengan riwayat percakapan terpisah.`,
-    modelId: model.id,
-    modelName: model.name,
-    provider: model.provider,
-    agentId,
-    timestamp: "Baru saja",
-    tokensUsed: 0,
-    wholesaleCostUsd: 0,
-    retailChargeUsd: 0,
-    latencyMs: 0,
-  };
-}
-
-function buildInitialTurnsByModel(modelsList: AIModelConfig[], agentId: string): Record<string, ChatTurn[]> {
-  const map: Record<string, ChatTurn[]> = {};
-  for (const m of modelsList) {
-    map[m.id] = [createWelcomeTurnForModel(m, agentId)];
-  }
-  return map;
-}
-
-function buildCustomModelDemoResponse(
-  prompt: string,
-  model: AIModelConfig,
-  persona: AgentPersona
-) {
-  const content = [
-    `### MODE DEMO · Pratinjau Endpoint Kustom (${model.name})`,
-    `Respons simulasi dari endpoint **${model.modelSlug}** (${model.provider}) melalui peran **${persona.name}**.`,
-    `- **Permintaan Anda**: "${prompt}"`,
-    `- **Spesifikasi Model**: Kategori ${model.category} · Konteks ${model.contextWindow} · Markup ${model.retailMarkupMultiplier}x.`,
-  ].join("\n\n");
-  const inTok = Math.max(48, Math.round(prompt.length / 3.5) + 45);
-  const outTok = Math.max(120, Math.round(content.length / 3.8));
-  const economics = calculateTokenEconomics(model, inTok, outTok);
-  return {
-    content,
-    economics,
-    latencyMs: model.avgLatencyMs,
-  };
-}
-
-export default function MultiModelAgentPlatformPage() {
-  const [models, setModels] = useState<AIModelConfig[]>(INITIAL_MODELS);
-  const [selectedModelId, setSelectedModelId] = useState<string>("gemini-3.8-flash");
-  const [activeView, setActiveView] = useState<ActiveTabView>("models");
-
-  const [compareMode, setCompareMode] = useState<boolean>(false);
-  const [compareModelId, setCompareModelId] = useState<string>("chatgpt-4o");
-  const [selectedAgentId, setSelectedAgentId] = useState<string>(AGENT_PERSONAS[0].id);
-  const [customSystemPrompt, setCustomSystemPrompt] = useState<string>("");
-  const [showAgentConfig, setShowAgentConfig] = useState<boolean>(false);
-
-  const [promptInput, setPromptInput] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [copiedTurnId, setCopiedTurnId] = useState<string | null>(null);
-
-  const [clientKeys, setClientKeys] = useState<ClientApiKey[]>(INITIAL_CLIENT_KEYS);
-
-  // "Buy a Coffee" Bottom Sub-Menu state
-  const [showCoffeeMenu, setShowCoffeeMenu] = useState<boolean>(false);
-  const [selectedCoffeeId, setSelectedCoffeeId] = useState<string>("coffee-3");
-  const [supporterName, setSupporterName] = useState<string>("");
-  const [supporterMessage, setSupporterMessage] = useState<string>("");
-  const [coffeeCount, setCoffeeCount] = useState<number>(0);
-  const [coffeeThankYou, setCoffeeThankYou] = useState<string | null>(null);
-
-  const promptInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [turnsByModel, setTurnsByModel] = useState<Record<string, ChatTurn[]>>(() =>
-    buildInitialTurnsByModel(INITIAL_MODELS, AGENT_PERSONAS[0].id)
-  );
-
-  const [telemetryProbes, setTelemetryProbes] = useState<ChatTurn[]>([]);
-
-  const enabledModels = models.filter((m) => m.enabled);
-  const activeModel =
-    enabledModels.find((m) => m.id === selectedModelId) ||
-    enabledModels[0] ||
-    models[0];
-  const secondaryModel =
-    enabledModels.find((m) => m.id === compareModelId && m.id !== activeModel.id) ||
-    enabledModels.find((m) => m.id !== activeModel.id) ||
-    models[1] ||
-    activeModel;
-  const activePersona =
-    AGENT_PERSONAS.find((a) => a.id === selectedAgentId) || AGENT_PERSONAS[0];
-
-  const turns = turnsByModel[activeModel.id] || [
-    createWelcomeTurnForModel(activeModel, activePersona.id),
-  ];
-
-  const appendTurnForModel = (modelId: string, newTurn: ChatTurn) => {
-    setTurnsByModel((prev) => {
-      const existing = prev[modelId] || [
-        createWelcomeTurnForModel(
-          models.find((m) => m.id === modelId) || activeModel,
-          activePersona.id
-        ),
-      ];
-      return {
-        ...prev,
-        [modelId]: [...existing, newTurn],
-      };
-    });
-  };
-
-  const allConversationTurns = Object.values(turnsByModel)
-    .flat()
-    .filter(
-      (t) =>
-        t.role === "assistant" &&
-        !t.id.startsWith("turn-welcome") &&
-        !t.id.startsWith("turn-reset")
-    );
-
-  const sessionTelemetryTurns = [...telemetryProbes, ...allConversationTurns];
-
-  const sessionTokens = sessionTelemetryTurns.reduce((acc, t) => acc + t.tokensUsed, 0);
-  const sessionWholesaleUsd = sessionTelemetryTurns.reduce(
-    (acc, t) => acc + t.wholesaleCostUsd,
-    0
-  );
-  const sessionRetailUsd = sessionTelemetryTurns.reduce(
-    (acc, t) => acc + t.retailChargeUsd,
-    0
-  );
-
-  // Selecting a model automatically opens its active workspace tab and focuses the input
-  const handleSelectModelAndLaunch = (modelId: string) => {
-    setSelectedModelId(modelId);
-    setActiveView("workspace");
-    setTimeout(() => {
-      promptInputRef.current?.focus();
-    }, 60);
-  };
-
-  const handleRunPrompt = async (overridePrompt?: string) => {
-    const textToSend = (overridePrompt ?? promptInput).trim();
-    if (!textToSend || loading) return;
-
-    const targetModel = activeModel;
-    const compareTarget = compareMode ? secondaryModel : null;
-
-    const userTurn: ChatTurn = {
-      id: createTurnId("usr"),
-      role: "user",
-      content: textToSend,
-      modelId: targetModel.id,
-      modelName: targetModel.name,
-      provider: targetModel.provider,
-      agentId: activePersona.id,
-      timestamp: getCurrentTimeLabel(),
-      tokensUsed: 0,
-      wholesaleCostUsd: 0,
-      retailChargeUsd: 0,
-      latencyMs: 0,
-    };
-
-    appendTurnForModel(targetModel.id, userTurn);
-    setPromptInput("");
-    setLoading(true);
-
-    // If custom model is used (not registered on server INITIAL_MODELS), run simulated gateway response locally
-    const isCustomPrimary = targetModel.id.startsWith("custom-");
-    const isCustomCompare = Boolean(compareTarget && compareTarget.id.startsWith("custom-"));
-
-    if (isCustomPrimary || isCustomCompare) {
-      const primarySim = buildCustomModelDemoResponse(textToSend, targetModel, activePersona);
-      const compareSim = compareTarget
-        ? buildCustomModelDemoResponse(textToSend, compareTarget, activePersona)
-        : null;
-
-      const assistantTurn: ChatTurn = {
-        id: createTurnId("ai"),
-        role: "assistant",
-        content: primarySim.content,
-        modelId: targetModel.id,
-        modelName: targetModel.name,
-        provider: targetModel.provider,
-        agentId: activePersona.id,
-        timestamp: getCurrentTimeLabel(),
-        tokensUsed: primarySim.economics.totalTokens + (compareSim ? compareSim.economics.totalTokens : 0),
-        wholesaleCostUsd:
-          primarySim.economics.wholesaleCostUsd + (compareSim ? compareSim.economics.wholesaleCostUsd : 0),
-        retailChargeUsd:
-          primarySim.economics.retailChargeUsd + (compareSim ? compareSim.economics.retailChargeUsd : 0),
-        latencyMs: primarySim.latencyMs,
-        comparisonResponses: compareSim && compareTarget
-          ? [
-              {
-                modelId: targetModel.id,
-                modelName: targetModel.name,
-                provider: targetModel.provider,
-                content: primarySim.content,
-                tokensUsed: primarySim.economics.totalTokens,
-                latencyMs: primarySim.latencyMs,
-                retailChargeUsd: primarySim.economics.retailChargeUsd,
-              },
-              {
-                modelId: compareTarget.id,
-                modelName: compareTarget.name,
-                provider: compareTarget.provider,
-                content: compareSim.content,
-                tokensUsed: compareSim.economics.totalTokens,
-                latencyMs: compareSim.latencyMs,
-                retailChargeUsd: compareSim.economics.retailChargeUsd,
-              },
-            ]
-          : undefined,
-      };
-
-      appendTurnForModel(targetModel.id, assistantTurn);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/gateway", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: textToSend,
-          modelId: targetModel.id,
-          compareModelId: compareTarget ? compareTarget.id : null,
-          agentId: activePersona.id,
-          customSystemPrompt: customSystemPrompt || undefined,
-        }),
-      });
-
-      const json = await res.json();
-      if (json.ok && json.primary) {
-        const p = json.primary;
-        const c = json.comparison;
-
-        // Calculate realistic simulated token economics in demo mode for session telemetry
-        const estInputTokens = Math.max(48, Math.round(textToSend.length / 3.5) + 45);
-        const estOutputTokens = Math.max(120, Math.round(String(p.content || "").length / 3.8));
-        const demoPrimaryEcon = calculateTokenEconomics(targetModel, estInputTokens, estOutputTokens);
-        const demoCompareEcon =
-          c && compareTarget
-            ? calculateTokenEconomics(
-                compareTarget,
-                estInputTokens,
-                Math.max(110, Math.round(String(c.content || "").length / 3.8))
-              )
-            : null;
-
-        const primaryTokens = p.tokensUsed > 0 ? p.tokensUsed : demoPrimaryEcon.totalTokens;
-        const primaryWholesale =
-          p.wholesaleCostUsd > 0 ? p.wholesaleCostUsd : demoPrimaryEcon.wholesaleCostUsd;
-        const primaryRetail =
-          p.retailChargeUsd > 0 ? p.retailChargeUsd : demoPrimaryEcon.retailChargeUsd;
-        const primaryLatency = p.latencyMs > 0 ? p.latencyMs : targetModel.avgLatencyMs;
-
-        const compareTokens = c
-          ? c.tokensUsed > 0
-            ? c.tokensUsed
-            : demoCompareEcon?.totalTokens || 0
-          : 0;
-        const compareWholesale = c
-          ? c.wholesaleCostUsd > 0
-            ? c.wholesaleCostUsd
-            : demoCompareEcon?.wholesaleCostUsd || 0
-          : 0;
-        const compareRetail = c
-          ? c.retailChargeUsd > 0
-            ? c.retailChargeUsd
-            : demoCompareEcon?.retailChargeUsd || 0
-          : 0;
-        const compareLatency = c
-          ? c.latencyMs > 0
-            ? c.latencyMs
-            : compareTarget?.avgLatencyMs || 420
-          : 0;
-
-        const assistantTurn: ChatTurn = {
-          id: createTurnId("ai"),
-          role: "assistant",
-          content: json.mode === "live"
-            ? [
-                "Respons langsung dari provider. Biaya API belum dihitung aplikasi, bukan berarti gratis. Periksa dashboard provider.",
-                p.content,
-                json.comparisonError
-                  ? "⚠️ Respons model pembanding gagal. Model utama berhasil, tetapi permintaan provider dapat tetap dikenai biaya."
-                  : "",
-              ].filter(Boolean).join("\n\n")
-            : p.content,
-          modelId: p.modelId,
-          modelName: p.modelName,
-          provider: p.provider,
-          agentId: activePersona.id,
-          timestamp: getCurrentTimeLabel(),
-          tokensUsed: primaryTokens + compareTokens,
-          wholesaleCostUsd: Number((primaryWholesale + compareWholesale).toFixed(6)),
-          retailChargeUsd: Number((primaryRetail + compareRetail).toFixed(6)),
-          latencyMs: primaryLatency,
-          comparisonResponses: c
-            ? [
-                {
-                  modelId: p.modelId,
-                  modelName: p.modelName,
-                  provider: p.provider,
-                  content: p.content,
-                  tokensUsed: primaryTokens,
-                  latencyMs: primaryLatency,
-                  retailChargeUsd: primaryRetail,
-                },
-                {
-                  modelId: c.modelId,
-                  modelName: c.modelName,
-                  provider: c.provider,
-                  content: c.content,
-                  tokensUsed: compareTokens,
-                  latencyMs: compareLatency,
-                  retailChargeUsd: compareRetail,
-                },
-              ]
-            : undefined,
-        };
-
-        appendTurnForModel(targetModel.id, assistantTurn);
-      } else {
-        appendTurnForModel(targetModel.id, {
-          ...userTurn,
-          id: createTurnId("err"),
-          role: "assistant",
-          content: "⚠️ Gateway belum dapat memproses permintaan (" + String(json.error || "UNKNOWN_ERROR") + "). Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
-        });
-      }
-    } catch (err) {
-      console.error("Gagal menjalankan permintaan model:", err);
-      appendTurnForModel(targetModel.id, {
-        ...userTurn,
-        id: createTurnId("err"),
-        role: "assistant",
-        content: "⚠️ Koneksi ke gateway gagal. Silakan coba lagi. Aplikasi tidak menerbitkan tagihan internal. Biaya provider belum dapat dipastikan.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetSession = () => {
-    setTelemetryProbes([]);
-    setTurnsByModel((prev) => ({
-      ...prev,
-      [activeModel.id]: [
-        {
-          id: createTurnId("turn-reset"),
-          role: "assistant",
-          content: `### Sesi Baru Dimulai · ${activeModel.name}\n\nSiap menerima instruksi Anda melalui peran **${activePersona.name}**. Silakan ketik pesan di bawah.`,
-          modelId: activeModel.id,
-          modelName: activeModel.name,
-          provider: activeModel.provider,
-          agentId: activePersona.id,
-          timestamp: "Baru saja",
-          tokensUsed: 0,
-          wholesaleCostUsd: 0,
-          retailChargeUsd: 0,
-          latencyMs: 0,
-        },
-      ],
-    }));
-  };
-
-  const handleRunBenchmarkSweep = () => {
-    const nowTime = new Date().toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    const sweepTurns: ChatTurn[] = enabledModels.map((model, index) => {
-      const inputTokens = 210 + index * 45;
-      const outputTokens = 380 + index * 70;
-      const econ = calculateTokenEconomics(model, inputTokens, outputTokens);
-      const jitter = (index % 2 === 0 ? -1 : 1) * (16 + index * 8);
-      const latencyMs = Math.max(175, model.avgLatencyMs + jitter);
-
-      return {
-        id: `bench-${Date.now()}-${model.id}`,
-        role: "assistant",
-        content: `Uji performa (${model.name})`,
-        modelId: model.id,
-        modelName: model.name,
-        provider: model.provider,
-        agentId: activePersona.id,
-        timestamp: nowTime,
-        tokensUsed: econ.totalTokens,
-        wholesaleCostUsd: econ.wholesaleCostUsd,
-        retailChargeUsd: econ.retailChargeUsd,
-        latencyMs,
-      };
-    });
-
-    setTelemetryProbes((prev) => [...prev, ...sweepTurns]);
-  };
-
-  const handleCopyTurn = (id: string, text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedTurnId(id);
-      setTimeout(() => setCopiedTurnId(null), 1800);
-    }
-  };
-
-  const handleToggleModelEnabled = (id: string) => {
-    setModels((prev) => {
-      const target = prev.find((m) => m.id === id);
-      if (!target) return prev;
-      const currentlyEnabled = prev.filter((m) => m.enabled);
-      // Ensure at least one model stays enabled
-      if (target.enabled && currentlyEnabled.length <= 1) {
-        return prev;
-      }
-      const next = prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m));
-      if (target.enabled && selectedModelId === id) {
-        const nextEnabled = next.find((m) => m.enabled);
-        if (nextEnabled) {
-          setSelectedModelId(nextEnabled.id);
-        }
-      }
-      return next;
-    });
-  };
-
-  const handleUpdateMultiplier = (id: string, multiplier: number) => {
-    setModels((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, retailMarkupMultiplier: multiplier } : m
-      )
-    );
-  };
-
-  const handleAddCustomModel = (newModel: AIModelConfig) => {
-    setModels((prev) => [...prev, newModel]);
-    setTurnsByModel((prev) => ({
-      ...prev,
-      [newModel.id]: [createWelcomeTurnForModel(newModel, activePersona.id)],
-    }));
-    handleSelectModelAndLaunch(newModel.id);
-  };
-
-  const handleCreateClientKey = (
-    label: string,
-    tier: ClientApiKey["tier"],
-    quotaUsd: number
-  ) => {
-    const suffix = Math.random().toString(16).substring(2, 6);
-    const created: ClientApiKey = {
-      id: `key-${Date.now()}`,
-      label,
-      keyPreview: `sk-cm_demo_${suffix}...9f01`,
-      tier,
-      monthlyQuotaUsd: quotaUsd,
-      usedUsd: 0,
-      createdAt: "2026-11-03",
-      active: true,
-    };
-    setClientKeys((prev) => [created, ...prev]);
-  };
-
-  const handleToggleKeyStatus = (id: string) => {
-    setClientKeys((prev) =>
-      prev.map((k) => (k.id === id ? { ...k, active: !k.active } : k))
-    );
-  };
-
-  const handleRevokeKey = (id: string) => {
-    setClientKeys((prev) => prev.filter((k) => k.id !== id));
-  };
-
-  const handleSendCoffeeSupport = (e: React.FormEvent) => {
-    e.preventDefault();
-    const chosen =
-      COFFEE_TIERS.find((c) => c.id === selectedCoffeeId) || COFFEE_TIERS[1];
-    const sender = supporterName.trim() || "Sahabat AI";
-    setCoffeeCount((prev) => prev + chosen.cups);
-    setCoffeeThankYou(
-      `Pratinjau untuk ${sender}: ${chosen.title} (${chosen.amountIdr}). Tidak ada transaksi pembayaran atau dukungan yang diterima melalui formulir demo ini.`
-    );
-    setSupporterName("");
-    setSupporterMessage("");
-  };
-
+function Logo() {
   return (
-    <div className="min-h-screen bg-white text-[#111113] flex flex-col justify-between">
-      {/* Strict 3-Zone Minimalist Top Bar */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-[#e4e4e7]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          {/* Zone 1: Brand Wordmark */}
-          <button
-            type="button"
-            onClick={() => setActiveView("models")}
-            className="text-lg font-bold tracking-tight text-[#111113] whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Codematt Agent
-          </button>
+    <span className="flex items-center gap-2 font-black tracking-tight text-[var(--text)]">
+      <span className="w-8 h-8 rounded-lg bg-[var(--accent)] text-neutral-950 flex items-center justify-center text-sm">C</span>
+      Codematt Agent
+    </span>
+  );
+}
 
-          {/* Zone 2: Minimalist Tab Navigation */}
-          <nav
-            aria-label="Navigasi Utama"
-            className="flex items-center gap-4 md:gap-6 text-xs md:text-sm font-medium text-[#52525b] overflow-x-auto py-1"
-          >
-            <button
-              type="button"
-              data-testid="nav-tab-models"
-              onClick={() => setActiveView("models")}
-              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                activeView === "models"
-                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
-                  : "hover:text-[#111113]"
-              }`}
-            >
-              Pilih Model
-            </button>
-            <button
-              type="button"
-              data-testid="nav-tab-workspace"
-              onClick={() => setActiveView("workspace")}
-              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                activeView === "workspace"
-                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
-                  : "hover:text-[#111113]"
-              }`}
-            >
-              Ruang Kerja ({activeModel.name})
-            </button>
-            <button
-              type="button"
-              data-testid="nav-tab-telemetry"
-              onClick={() => setActiveView("telemetry")}
-              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                activeView === "telemetry"
-                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
-                  : "hover:text-[#111113]"
-              }`}
-            >
-              Statistik Sesi
-            </button>
-            <button
-              type="button"
-              data-testid="nav-tab-owner"
-              onClick={() => setActiveView("owner")}
-              className={`py-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                activeView === "owner"
-                  ? "text-[#111113] font-bold border-b-2 border-[#f5b800]"
-                  : "hover:text-[#111113]"
-              }`}
-            >
-              Pengaturan Owner
-            </button>
+/** Before/after illustration. Drawn in SVG so no stock photo is needed. */
+function PhotoIllustration() {
+  return (
+    <svg viewBox="0 0 520 330" className="w-full h-auto block" role="img" aria-label="Contoh foto rumah sebelum dan sesudah nomor rumah serta nomor telepon dihapus">
+      <defs>
+        <clipPath id="left"><rect width="260" height="330" /></clipPath>
+        <clipPath id="right"><rect x="260" width="260" height="330" /></clipPath>
+      </defs>
+      {[
+        { clip: "url(#left)", clean: false },
+        { clip: "url(#right)", clean: true },
+      ].map(({ clip, clean }) => (
+        <g key={String(clean)} clipPath={clip}>
+          <rect width="520" height="330" fill="#a9d3ee" />
+          <rect y="250" width="520" height="80" fill="#9a9d94" />
+          <polygon points="120,120 260,50 400,120" fill="#7b3f2b" />
+          <rect x="140" y="120" width="240" height="130" fill="#f1e8d8" />
+          <rect x="235" y="170" width="50" height="80" fill="#5b4636" />
+          <rect x="165" y="145" width="48" height="40" fill="#d3e6f1" />
+          <rect x="307" y="145" width="48" height="40" fill="#d3e6f1" />
+          <rect x="40" y="195" width="70" height="55" fill="#d9d3c7" />
+          {!clean && <text x="56" y="231" fontSize="22" fontWeight="700" fill="#333">42</text>}
+          {!clean && (
+            <g>
+              <rect x="405" y="165" width="100" height="55" rx="3" fill="#d32f2f" />
+              <text x="415" y="188" fontSize="13" fontWeight="700" fill="#fff">DIJUAL</text>
+              <text x="415" y="207" fontSize="10.5" fill="#fff">0812-xxxx-xxxx</text>
+            </g>
+          )}
+        </g>
+      ))}
+      <line x1="260" y1="0" x2="260" y2="330" stroke="#fff" strokeWidth="3" />
+      <rect x="10" y="10" width="78" height="22" rx="11" fill="rgba(0,0,0,.6)" />
+      <text x="49" y="25" fontSize="11" fill="#fff" textAnchor="middle" fontWeight="700">Sebelum</text>
+      <rect x="432" y="10" width="78" height="22" rx="11" fill="#f5b800" />
+      <text x="471" y="25" fontSize="11" fill="#111" textAnchor="middle" fontWeight="700">Sesudah</text>
+    </svg>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
+          <Link href="/" aria-label="Codematt Agent, beranda"><Logo /></Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-[var(--muted)]">
+            <a href="#fitur" className="hover:text-[var(--text)]">Fitur</a>
+            <a href="#harga" className="hover:text-[var(--text)]">Harga</a>
+            <a href="#faq" className="hover:text-[var(--text)]">FAQ</a>
           </nav>
-
-          {/* Zone 3: Primary Actions */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Link
-              href="/dashboard"
-              data-testid="nav-link-agent-suite"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#111113] bg-[#fafafa] hover:bg-[#f4f4f5] border border-[#e4e4e7] rounded-lg transition-colors whitespace-nowrap shrink-0"
-            >
-              <Building2 className="w-3.5 h-3.5 text-[#f5b800]" />
-              <span>Studio Properti</span>
-            </Link>
-            <button
-              type="button"
-              onClick={handleResetSession}
-              className="px-4 py-2 text-xs font-semibold text-[#111113] bg-[#f5b800] hover:bg-[#e5ac00] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              Sesi Baru
-            </button>
+          <div className="flex items-center gap-2">
+            <Link href="/login" className="px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-[var(--surface)]">Masuk</Link>
+            <Link href="/signup" className="px-3.5 py-2 rounded-xl text-sm font-bold bg-[var(--accent)] text-neutral-950 hover:bg-[var(--accent-hover)]">Daftar gratis</Link>
           </div>
         </div>
       </header>
 
-      {/* Main Focused Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
-        {/* VIEW 1: PILIH MODEL AI (DEFAULT MINIMALIST LANDING) */}
-        {activeView === "models" && (
-          <section
-            id="models"
-            aria-label="Pilihan Model AI"
-            className="space-y-8"
-          >
-            <div className="max-w-2xl space-y-2">
-              <div className="text-xs text-[#52525b] flex items-center gap-2">
-                <span>Status:</span>
-                <span className="font-mono font-semibold text-[#111113]">
-                  {OWNER_EMAIL}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>{enabledModels.length} model katalog demo</span>
+      <main>
+        {/* Hero */}
+        <section className="max-w-6xl mx-auto px-5 pt-14 pb-16 grid lg:grid-cols-2 gap-10 items-center">
+          <div className="space-y-6">
+            <span className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--text)]">
+              Untuk agen properti di Indonesia
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.08]">
+              Foto listing bersih dan pesan klien siap kirim, dalam hitungan menit.
+            </h1>
+            <p className="text-base text-[var(--muted)] max-w-xl leading-relaxed">
+              Hapus nomor rumah dan nomor telepon dari foto, ubah ukuran untuk portal dan Instagram,
+              lalu minta Gemini, ChatGPT, atau Claude membantu menulis listing dan follow-up.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/signup" className="px-5 py-3 rounded-xl bg-[var(--accent)] text-neutral-950 font-bold text-sm flex items-center gap-2 hover:bg-[var(--accent-hover)]">
+                Mulai gratis <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link href="/dashboard" className="px-5 py-3 rounded-xl border border-[var(--border)] font-semibold text-sm hover:bg-[var(--surface)]">
+                Lihat workspace demo
+              </Link>
+            </div>
+            <p className="text-xs text-[var(--muted)]">Tanpa kartu kredit. Paket Free tidak kedaluwarsa.</p>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm space-y-3">
+            <div className="rounded-xl overflow-hidden border border-[var(--border)]">
+              <PhotoIllustration />
+            </div>
+            <div className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 space-y-2 text-xs">
+              <div className="flex gap-1.5">
+                {(["google", "openai", "anthropic"] as const).map((p, i) => (
+                  <span key={p} className={`px-2.5 py-1 rounded-lg font-bold border ${i === 1 ? "bg-[var(--accent)] border-[var(--accent)] text-neutral-950" : "border-[var(--border)]"}`}>
+                    {PROVIDER_LABELS[p]}
+                  </span>
+                ))}
               </div>
-              <h1
-                className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111113]"
-                style={{ textWrap: "balance" }}
-              >
-                Pilih Model AI untuk Mulai Bekerja
-              </h1>
-              <p className="text-sm text-[#52525b] leading-relaxed">
-                Pilih model untuk melihat pratinjau antarmuka. Adapter provider, autentikasi, biaya API, dan tagihan belum terhubung. Tidak ada respons langsung dari model berbayar di mode demo.
+              <p className="p-2.5 rounded-lg bg-[var(--accent)] text-neutral-950 ml-auto max-w-[85%] w-fit">
+                Buat pesan follow-up untuk klien yang 3 hari belum membalas
+              </p>
+              <p className="p-2.5 rounded-lg border border-[var(--border)] max-w-[90%]">
+                Halo Pak Andi, saya mau menanyakan lagi soal rumah yang kemarin Bapak lihat. Kalau berkenan, saya bisa atur survei ulang akhir pekan ini.
               </p>
             </div>
+          </div>
+        </section>
 
-            {/* Ultra-Clean Model Selection Grid (Only agent-relevant info) */}
-            <div
-              data-testid="model-selector-grid"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
-              {enabledModels.map((model) => {
-                const isSelected = model.id === activeModel.id;
+        {/* Features */}
+        <section id="fitur" className="border-t border-[var(--border)] bg-[var(--surface)]">
+          <div className="max-w-6xl mx-auto px-5 py-16 space-y-10">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Pekerjaan harian agen, lebih cepat</h2>
+              <p className="mt-2 text-[var(--muted)]">Semua yang biasanya dikerjakan di empat aplikasi berbeda.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {FEATURES.map(({ icon: Icon, title, body }) => (
+                <div key={title} className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)]">
+                  <Icon className="w-6 h-6 text-[var(--accent)]" />
+                  <h3 className="mt-4 font-bold">{title}</h3>
+                  <p className="mt-1.5 text-sm text-[var(--muted)] leading-relaxed">{body}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--muted)]">
+              <span className="flex items-center gap-2"><Wand2 className="w-4 h-4" /> Editor foto</span>
+              <span className="flex items-center gap-2"><Palette className="w-4 h-4" /> Flyer studio</span>
+              <span className="flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Follow-up WhatsApp</span>
+              <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Brand kit</span>
+            </div>
+          </div>
+        </section>
 
+        {/* How it works */}
+        <section className="max-w-6xl mx-auto px-5 py-16">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Cara mulai</h2>
+          <ol className="mt-8 grid md:grid-cols-3 gap-6">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="flex gap-4">
+                <span className="w-9 h-9 shrink-0 rounded-full bg-[var(--accent)] text-neutral-950 font-black flex items-center justify-center">{i + 1}</span>
+                <div>
+                  <h3 className="font-bold">{s.title}</h3>
+                  <p className="mt-1 text-sm text-[var(--muted)] leading-relaxed">{s.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Pricing teaser */}
+        <section id="harga" className="border-t border-[var(--border)] bg-[var(--surface)]">
+          <div className="max-w-6xl mx-auto px-5 py-16 space-y-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Harga</h2>
+                <p className="mt-2 text-[var(--muted)]">Bayar per 30 hari. Tidak ada kontrak.</p>
+              </div>
+              <Link href="/pricing" className="text-sm font-bold flex items-center gap-1 hover:underline">Detail paket <ArrowRight className="w-4 h-4" /></Link>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {PLAN_ORDER.map((id) => {
+                const plan = PLANS[id];
+                const featured = id === "pro";
                 return (
-                  <button
-                    key={model.id}
-                    type="button"
-                    data-testid={`select-model-${model.id}`}
-                    onClick={() => handleSelectModelAndLaunch(model.id)}
-                    className={`group text-left p-6 rounded-xl border transition-all flex flex-col justify-between gap-6 cursor-pointer ${
-                      isSelected
-                        ? "bg-[#fef9c3]/55 border-[#f5b800] ring-2 ring-[#f5b800]/40"
-                        : "bg-white border-[#e4e4e7] hover:border-[#f5b800]"
-                    }`}
-                  >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between text-xs text-[#52525b]">
-                        <span>{model.provider}</span>
-                        <span className="font-mono tabular-nums">
-                          {model.contextWindow}
-                        </span>
-                      </div>
-
-                      <div className="text-lg font-bold text-[#111113]">
-                        {model.name}
-                      </div>
-
-                      <p className="text-xs text-[#52525b] leading-relaxed">
-                        {model.summary}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-[#e4e4e7] flex items-center justify-between text-xs">
-                      <span className="text-[#52525b]">
-                        {model.strengths[0]}
-                      </span>
-                      <span className="font-semibold text-[#111113] inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                        <span>Buka Tab Model</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-[#f5b800]" />
-                      </span>
-                    </div>
-                  </button>
+                  <div key={id} className={`p-5 rounded-2xl border flex flex-col ${featured ? "border-[var(--accent)] bg-[var(--bg)] ring-2 ring-[var(--accent)]/30" : "border-[var(--border)] bg-[var(--bg)]"}`}>
+                    <h3 className="font-black">{plan.name}</h3>
+                    <p className="mt-2 text-2xl font-black">
+                      {plan.purchasable ? formatRupiah(plan.priceIdr) : id === "free" ? "Gratis" : "Hubungi kami"}
+                      {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> / 30 hari</span>}
+                    </p>
+                    <ul className="mt-4 space-y-1.5 text-sm flex-1">
+                      {plan.highlights.map((h) => (
+                        <li key={h} className="flex gap-2"><Check className="w-4 h-4 mt-0.5 text-[var(--accent)] shrink-0" />{h}</li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={id === "free" ? "/signup" : "/pricing"}
+                      className={`mt-5 py-2.5 rounded-xl text-sm font-bold text-center ${featured ? "bg-[var(--accent)] text-neutral-950" : "border border-[var(--border)] hover:bg-[var(--surface)]"}`}
+                    >
+                      {id === "free" ? "Daftar gratis" : id === "team" ? "Tanya admin" : `Pilih ${plan.name}`}
+                    </Link>
+                  </div>
                 );
               })}
             </div>
-          </section>
-        )}
-
-        {/* VIEW 2: RUANG KERJA AGEN (AUTO-OPENED ON MODEL SELECT) */}
-        {activeView === "workspace" && (
-          <section
-            id="workspace"
-            data-testid="active-model-workspace"
-            aria-label="Ruang Kerja Agen AI"
-            className="space-y-5"
-          >
-            {/* Instant Model Tabs Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e4e4e7]">
-              <div
-                role="tablist"
-                aria-label="Tab Model AI Aktif"
-                className="flex items-center gap-1.5 overflow-x-auto py-1"
-              >
-                {enabledModels.map((model) => {
-                  const isCurrent = model.id === activeModel.id;
-                  return (
-                    <button
-                      key={model.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={isCurrent}
-                      data-testid={`workspace-tab-${model.id}`}
-                      onClick={() => setSelectedModelId(model.id)}
-                      className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        isCurrent
-                          ? "bg-[#f5b800] text-[#111113]"
-                          : "bg-[#fafafa] text-[#52525b] hover:text-[#111113] border border-[#e4e4e7]"
-                      }`}
-                    >
-                      {model.name}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Minimalist Agent Controls Toggle (Hidden by default to keep workspace clean) */}
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  data-testid="toggle-agent-options"
-                  onClick={() => setShowAgentConfig((prev) => !prev)}
-                  className={`px-3 py-2 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                    showAgentConfig
-                      ? "bg-[#fef9c3] border-[#f5b800] text-[#111113] font-semibold"
-                      : "bg-white border-[#e4e4e7] text-[#52525b] hover:text-[#111113]"
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Peran: {activePersona.name}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCompareMode((prev) => !prev)}
-                  className={`px-3 py-2 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                    compareMode
-                      ? "bg-[#f5b800] border-[#f5b800] text-[#111113] font-semibold"
-                      : "bg-white border-[#e4e4e7] text-[#52525b] hover:text-[#111113]"
-                  }`}
-                >
-                  <Columns2 className="w-3.5 h-3.5" />
-                  <span>Bandingkan 2 Model</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Collapsible Agent Role & Custom Instruction Drawer (Only shown when requested) */}
-            {showAgentConfig && (
-              <div className="p-5 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#111113]">
-                    Pilih Peran Spesialis Agen
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowAgentConfig(false)}
-                    className="text-xs text-[#52525b] hover:text-[#111113] cursor-pointer"
-                  >
-                    Tutup
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {AGENT_PERSONAS.map((persona) => {
-                    const isSelected = persona.id === activePersona.id;
-                    return (
-                      <button
-                        key={persona.id}
-                        type="button"
-                        onClick={() => setSelectedAgentId(persona.id)}
-                        className={`text-left p-3.5 rounded-lg border transition-colors cursor-pointer ${
-                          isSelected
-                            ? "bg-white border-[#f5b800] ring-1 ring-[#f5b800]"
-                            : "bg-white border-[#e4e4e7] hover:border-[#111113]/30"
-                        }`}
-                      >
-                        <div className="text-xs font-bold text-[#111113]">
-                          {persona.name}
-                        </div>
-                        <div className="text-[11px] text-[#52525b] mt-0.5">
-                          {persona.role}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="space-y-1.5 text-xs">
-                  <label
-                    htmlFor="custom-system-instruction"
-                    className="block font-semibold text-[#111113]"
-                  >
-                    Instruksi Khusus Tambahan (Opsional)
-                  </label>
-                  <input
-                    id="custom-system-instruction"
-                    type="text"
-                    value={customSystemPrompt}
-                    onChange={(e) => setCustomSystemPrompt(e.target.value)}
-                    placeholder={activePersona.systemPrompt}
-                    className="w-full px-3 py-2 rounded-lg bg-white border border-[#e4e4e7] text-[#111113] text-xs"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Secondary Model Bar when Compare Mode is enabled */}
-            {compareMode && (
-              <div className="px-4 py-3 rounded-xl bg-[#fef9c3]/45 border border-[#f5b800] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="text-[#111113]">
-                  Membandingkan langsung <strong>{activeModel.name}</strong> dengan{" "}
-                  <strong>{secondaryModel?.name}</strong>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="compare-model-select"
-                    className="font-semibold text-[#111113]"
-                  >
-                    Model Pembanding:
-                  </label>
-                  <select
-                    id="compare-model-select"
-                    value={secondaryModel?.id || ""}
-                    onChange={(e) => setCompareModelId(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg bg-white border border-[#e4e4e7] text-[#111113] font-medium"
-                  >
-                    {enabledModels
-                      .filter((m) => m.id !== activeModel.id)
-                      .map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} ({m.provider})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {/* Focused Agent Chat Canvas */}
-            <div className="flex flex-col rounded-xl bg-white border border-[#e4e4e7] min-h-[520px]">
-              {/* Minimalist Header inside Workspace */}
-              <div className="px-6 py-3.5 border-b border-[#e4e4e7] bg-[#fafafa] rounded-t-xl flex items-center justify-between gap-4">
-                <div className="text-xs flex items-center gap-2">
-                  <span className="font-bold text-[#111113] text-sm">
-                    {activeModel.name}
-                  </span>
-                  {compareMode && secondaryModel && (
-                    <span className="font-bold text-[#111113] text-sm">
-                      vs. {secondaryModel.name}
-                    </span>
-                  )}
-                  <span aria-hidden="true" className="text-[#52525b]">
-                    ·
-                  </span>
-                  <span className="text-[#52525b]">{activeModel.provider}</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleResetSession}
-                  aria-label="Bersihkan Percakapan"
-                  className="px-2.5 py-1 rounded-lg border border-[#e4e4e7] bg-white hover:bg-[#fafafa] text-xs text-[#52525b] hover:text-[#111113] inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Bersihkan</span>
-                </button>
-              </div>
-
-              {/* Conversation Stream (Distraction-free, no billing clutter) */}
-              <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[460px]">
-                {turns.map((t) => {
-                  if (t.role === "user") {
-                    return (
-                      <div key={t.id} className="flex justify-end">
-                        <div className="max-w-xl px-4 py-3 rounded-xl bg-[#fef9c3] border border-[#f5b800] text-[#111113] text-xs sm:text-sm leading-relaxed">
-                          <p className="whitespace-pre-wrap">{t.content}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  if (t.comparisonResponses && t.comparisonResponses.length === 2) {
-                    return (
-                      <div key={t.id} className="space-y-2">
-                        <div className="text-xs text-[#52525b]">
-                          Perbandingan Respons · {t.timestamp}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {t.comparisonResponses.map((cmp) => (
-                            <div
-                              key={cmp.modelId}
-                              className="p-4 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-2 text-xs leading-relaxed"
-                            >
-                              <div className="flex items-center justify-between pb-2 border-b border-[#e4e4e7]">
-                                <span className="font-bold text-[#111113]">
-                                  {cmp.modelName}
-                                </span>
-                                <span className="text-[#52525b]">
-                                  {cmp.provider}
-                                </span>
-                              </div>
-                              <FormattedMessage text={cmp.content} />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={t.id}
-                      className="p-5 rounded-xl bg-[#fafafa] border border-[#e4e4e7] space-y-3"
-                    >
-                      <div className="flex items-center justify-between text-xs text-[#52525b] pb-2 border-b border-[#e4e4e7]">
-                        <div>
-                          <span className="font-bold text-[#111113]">
-                            {t.modelName}
-                          </span>
-                          <span aria-hidden="true"> · </span>
-                          <span>{activePersona.name}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyTurn(t.id, t.content)}
-                          aria-label="Salin jawaban"
-                          className="text-[#52525b] hover:text-[#111113] inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedTurnId === t.id ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Tersalin</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5" />
-                              <span>Salin</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <FormattedMessage text={t.content} />
-                    </div>
-                  );
-                })}
-
-                {loading && (
-                  <div className="p-4 rounded-xl bg-[#fafafa] border border-[#e4e4e7] text-xs text-[#52525b]">
-                    Memproses bersama {activeModel.name}...
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Starter Prompts Row */}
-              <div className="px-6 py-2.5 bg-[#fafafa] border-t border-[#e4e4e7] flex items-center gap-2 overflow-x-auto">
-                <Sparkles className="w-3.5 h-3.5 text-[#f5b800] shrink-0" />
-                {activePersona.starterPrompts.map((sp, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleRunPrompt(sp)}
-                    disabled={loading}
-                    className="px-3 py-1 rounded-lg bg-white border border-[#e4e4e7] hover:border-[#f5b800] text-xs text-[#111113] whitespace-nowrap shrink-0 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {sp}
-                  </button>
-                ))}
-              </div>
-
-              {/* Minimalist Prompt Input Bar */}
-              <div className="p-4 border-t border-[#e4e4e7] bg-white rounded-b-xl">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleRunPrompt();
-                  }}
-                  className="flex flex-col sm:flex-row gap-3"
-                >
-                  <input
-                    ref={promptInputRef}
-                    type="text"
-                    value={promptInput}
-                    onChange={(e) => setPromptInput(e.target.value)}
-                    placeholder={`Tulis instruksi untuk ${activeModel.name}...`}
-                    aria-label="Input pesan untuk agen AI"
-                    className="flex-1 px-4 py-3 rounded-lg bg-[#fafafa] border border-[#e4e4e7] text-xs sm:text-sm text-[#111113] placeholder:text-[#52525b]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading || !promptInput.trim()}
-                    className="px-5 py-3 rounded-lg bg-[#f5b800] hover:bg-[#e5ac00] disabled:opacity-50 text-[#111113] text-xs font-bold flex items-center justify-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{loading ? "Memproses..." : "Kirim"}</span>
-                  </button>
-                </form>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* VIEW 3: STATISTIK SESI & TELEMETRI VISUAL */}
-        {activeView === "telemetry" && (
-          <SessionTelemetryDashboard
-            models={models}
-            turns={sessionTelemetryTurns}
-            selectedModelId={activeModel.id}
-            onSelectModel={(id) => handleSelectModelAndLaunch(id)}
-            onRunBenchmarkSweep={handleRunBenchmarkSweep}
-          />
-        )}
-
-        {/* VIEW 4: PENGATURAN OWNER (REGISTRI MODEL & KOMERSIALISASI) */}
-        {activeView === "owner" && (
-          <div className="space-y-10">
-            <ModelRegistryPanel
-              models={models}
-              selectedModelId={activeModel.id}
-              onSelectModel={(id) => handleSelectModelAndLaunch(id)}
-              onToggleModelEnabled={handleToggleModelEnabled}
-              onUpdateMultiplier={handleUpdateMultiplier}
-              onAddCustomModel={handleAddCustomModel}
-            />
-
-            <CommercialHubPanel
-              ownerEmail={OWNER_EMAIL}
-              sessionTokens={sessionTokens}
-              sessionWholesaleUsd={sessionWholesaleUsd}
-              sessionRetailUsd={sessionRetailUsd}
-              clientKeys={clientKeys}
-              onCreateKey={handleCreateClientKey}
-              onToggleKeyStatus={handleToggleKeyStatus}
-              onRevokeKey={handleRevokeKey}
-            />
           </div>
-        )}
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="max-w-3xl mx-auto px-5 py-16">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Pertanyaan umum</h2>
+          <div className="mt-6 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+            {FAQ.map((f) => (
+              <details key={f.q} className="group py-4">
+                <summary className="cursor-pointer font-semibold list-none flex justify-between gap-4">
+                  {f.q}
+                  <span className="text-[var(--muted)] group-open:rotate-45 transition-transform">+</span>
+                </summary>
+                <p className="mt-2 text-sm text-[var(--muted)] leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="max-w-6xl mx-auto px-5 pb-16">
+          <div className="rounded-3xl bg-[var(--accent)] text-neutral-950 p-8 sm:p-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Coba di listing berikutnya.</h2>
+              <p className="mt-2 text-neutral-800">Paket Free cukup untuk mencoba semua fitur dasar.</p>
+            </div>
+            <Link href="/signup" className="px-6 py-3 rounded-xl bg-neutral-950 text-white font-bold text-sm flex items-center gap-2 w-fit">
+              Daftar gratis <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
       </main>
 
-      {/* ENGAGING BOTTOM SUB-MENU & "TRAKTIR KOPI" SUPPORT DOCK */}
-      <footer
-        aria-label="Sub-menu Bawah dan Dukungan Proyek"
-        className="sticky bottom-0 z-30 bg-white/95 backdrop-blur border-t border-[#e4e4e7]"
-      >
-        {/* Expandable "Traktir Kopi" (Buy a Coffee) Interactive Support Drawer */}
-        {showCoffeeMenu && (
-          <div
-            data-testid="coffee-support-drawer"
-            className="border-b border-[#e4e4e7] bg-[#fafafa]"
-          >
-            <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#111113]">
-                    <Coffee className="w-4 h-4 text-[#f5b800]" />
-                    <span>Traktir Kopi untuk Pengembangan Codematt Agent</span>
-                  </div>
-                  <p className="text-xs text-[#52525b] max-w-xl">
-                    Formulir dukungan ini hanya demonstrasi. Belum ada pembayaran atau pengiriman dukungan yang diproses.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowCoffeeMenu(false)}
-                  aria-label="Tutup panel traktir kopi"
-                  className="p-1.5 rounded-lg border border-[#e4e4e7] bg-white text-[#52525b] hover:text-[#111113] cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {coffeeThankYou && (
-                <div
-                  role="status"
-                  data-testid="coffee-thank-you-banner"
-                  className="p-4 rounded-xl bg-[#fef9c3] border border-[#f5b800] flex items-center justify-between gap-4 text-xs text-[#111113]"
-                >
-                  <div className="flex items-center gap-2 font-medium">
-                    <Heart className="w-4 h-4 text-[#111113] fill-current shrink-0" />
-                    <span>{coffeeThankYou}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCoffeeThankYou(null)}
-                    className="font-semibold underline cursor-pointer shrink-0"
-                  >
-                    Tutup
-                  </button>
-                </div>
-              )}
-
-              <form
-                onSubmit={handleSendCoffeeSupport}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end"
-              >
-                {/* 3 Coffee Tier Cards */}
-                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {COFFEE_TIERS.map((tier) => {
-                    const isPicked = tier.id === selectedCoffeeId;
-                    return (
-                      <button
-                        key={tier.id}
-                        type="button"
-                        data-testid={`select-${tier.id}`}
-                        onClick={() => setSelectedCoffeeId(tier.id)}
-                        className={`text-left p-4 rounded-xl border transition-all cursor-pointer ${
-                          isPicked
-                            ? "bg-[#fef9c3]/65 border-[#f5b800] ring-1 ring-[#f5b800]"
-                            : "bg-white border-[#e4e4e7] hover:border-[#111113]/40"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs font-mono font-bold text-[#111113]">
-                          <span className="inline-flex items-center gap-1 text-[#111113]">
-                            <Coffee className="w-3.5 h-3.5 text-[#f5b800]" />
-                            <span>{tier.cups}x</span>
-                          </span>
-                          <span>{tier.amountIdr}</span>
-                        </div>
-                        <div className="text-xs font-bold text-[#111113] mt-2">
-                          {tier.title}
-                        </div>
-                        <p className="text-[11px] text-[#52525b] mt-1">
-                          {tier.caption}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Supporter Name, Message & Submit Button */}
-                <div className="lg:col-span-5 flex flex-col sm:flex-row gap-2.5">
-                  <input
-                    type="text"
-                    value={supporterName}
-                    onChange={(e) => setSupporterName(e.target.value)}
-                    placeholder="Nama Anda (opsional)"
-                    aria-label="Nama pendukung"
-                    className="px-3 py-2.5 rounded-lg bg-white border border-[#e4e4e7] text-xs text-[#111113] sm:w-40"
-                  />
-                  <input
-                    type="text"
-                    value={supporterMessage}
-                    onChange={(e) => setSupporterMessage(e.target.value)}
-                    placeholder="Pesan semangat..."
-                    aria-label="Pesan dukungan"
-                    className="flex-1 px-3 py-2.5 rounded-lg bg-white border border-[#e4e4e7] text-xs text-[#111113]"
-                  />
-                  <button
-                    type="submit"
-                    data-testid="submit-coffee-support"
-                    className="px-4 py-2.5 rounded-lg bg-[#f5b800] hover:bg-[#e5ac00] text-[#111113] text-xs font-bold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-                  >
-                    <Coffee className="w-3.5 h-3.5" />
-                    <span>Kirim Kopi</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Sub-Menu Bar */}
-        <div className="max-w-6xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs">
-          {/* Quick Sub-Menu Switcher */}
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setActiveView("models")}
-              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                activeView === "models"
-                  ? "bg-[#111113] text-white font-semibold"
-                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Daftar Model</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView("workspace")}
-              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                activeView === "workspace"
-                  ? "bg-[#111113] text-white font-semibold"
-                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Tab Aktif: {activeModel.name}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView("telemetry")}
-              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                activeView === "telemetry"
-                  ? "bg-[#111113] text-white font-semibold"
-                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Statistik ({sessionTokens.toLocaleString("id-ID")} tok)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView("owner")}
-              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
-                activeView === "owner"
-                  ? "bg-[#111113] text-white font-semibold"
-                  : "text-[#52525b] hover:text-[#111113] hover:bg-[#fafafa]"
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Pengaturan Owner</span>
-            </button>
-          </div>
-
-          {/* Engaging "Traktir Kopi / Buy a Coffee" CTA Button */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              data-testid="buy-coffee-trigger"
-              onClick={() => setShowCoffeeMenu((prev) => !prev)}
-              className="px-3.5 py-1.5 rounded-lg bg-[#fef9c3] hover:bg-[#f5b800] border border-[#f5b800] text-[#111113] font-semibold inline-flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer"
-            >
-              <Coffee className="w-3.5 h-3.5" />
-              <span>Traktir Kopi</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums">{coffeeCount}</span>
-            </button>
+      <footer className="border-t border-[var(--border)]">
+        <div className="max-w-6xl mx-auto px-5 py-8 flex flex-col sm:flex-row justify-between gap-4 text-sm text-[var(--muted)]">
+          <Logo />
+          <div className="flex flex-wrap gap-5">
+            <Link href="/pricing" className="hover:text-[var(--text)]">Harga</Link>
+            <Link href="/roadmap" className="hover:text-[var(--text)]">Status fitur</Link>
+            <Link href="/login" className="hover:text-[var(--text)]">Masuk</Link>
           </div>
         </div>
       </footer>
     </div>
   );
-}
-
-function FormattedMessage({ text }: { text: string }) {
-  const lines = text.split("\n");
-  const blocks: React.ReactNode[] = [];
-  let inCodeBlock = false;
-  let codeBuffer: string[] = [];
-
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("```")) {
-      if (inCodeBlock) {
-        blocks.push(
-          <pre
-            key={`code-${idx}`}
-            className="p-3.5 rounded-lg bg-white border border-[#e4e4e7] font-mono text-xs text-[#111113] overflow-x-auto"
-          >
-            <code>{codeBuffer.join("\n")}</code>
-          </pre>
-        );
-        codeBuffer = [];
-        inCodeBlock = false;
-      } else {
-        inCodeBlock = true;
-      }
-      return;
-    }
-
-    if (inCodeBlock) {
-      codeBuffer.push(line);
-      return;
-    }
-
-    if (!trimmed) {
-      return;
-    }
-
-    if (trimmed.startsWith("### ")) {
-      blocks.push(
-        <h4 key={idx} className="text-sm font-bold text-[#111113] pt-1">
-          {renderInlineFormatting(trimmed.replace(/^###\s+/, ""))}
-        </h4>
-      );
-      return;
-    }
-
-    if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
-      blocks.push(
-        <h3 key={idx} className="text-base font-bold text-[#111113] pt-1">
-          {renderInlineFormatting(trimmed.replace(/^#+\s+/, ""))}
-        </h3>
-      );
-      return;
-    }
-
-    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      blocks.push(
-        <div
-          key={idx}
-          className="flex items-start gap-2 text-xs sm:text-sm text-[#111113] leading-relaxed pl-1"
-        >
-          <span
-            className="text-[#f5b800] font-bold select-none"
-            aria-hidden="true"
-          >
-            •
-          </span>
-          <span>{renderInlineFormatting(trimmed.slice(2))}</span>
-        </div>
-      );
-      return;
-    }
-
-    if (/^\d+\.\s+/.test(trimmed)) {
-      const match = trimmed.match(/^(\d+\.)\s+(.*)$/);
-      if (match) {
-        blocks.push(
-          <div
-            key={idx}
-            className="flex items-start gap-2 text-xs sm:text-sm text-[#111113] leading-relaxed pl-1"
-          >
-            <span className="font-mono font-bold text-[#111113] select-none">
-              {match[1]}
-            </span>
-            <span>{renderInlineFormatting(match[2])}</span>
-          </div>
-        );
-        return;
-      }
-    }
-
-    blocks.push(
-      <p key={idx} className="text-xs sm:text-sm text-[#111113] leading-relaxed">
-        {renderInlineFormatting(trimmed)}
-      </p>
-    );
-  });
-
-  return <div className="space-y-2">{blocks}</div>;
-}
-
-function renderInlineFormatting(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return (
-        <strong key={i} className="font-semibold text-[#111113]">
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-    if (part.startsWith("`") && part.endsWith("`")) {
-      return (
-        <code
-          key={i}
-          className="px-1.5 py-0.5 rounded bg-white border border-[#e4e4e7] font-mono text-[11px] text-[#111113]"
-        >
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    return part;
-  });
 }
