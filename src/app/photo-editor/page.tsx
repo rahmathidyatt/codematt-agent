@@ -7,7 +7,6 @@ import {
   Undo2,
   RotateCcw,
   Download,
-  ShieldCheck,
   CheckCircle2,
   Sparkles,
   Eye,
@@ -38,10 +37,9 @@ import {
   applyPixelate,
   applyBlur,
   applySmartInpaint,
-  formatRegionCoordinates,
   getDirectiveMethodLabel,
 } from "@/features/photo-editor/photo-utils";
-import { RESIZE_PRESETS, padRegion, planResize } from "@/features/photo-editor/resize";
+import { padRegion } from "@/features/photo-editor/resize";
 import type { DetectedBox } from "@/lib/ai/provider-parsers";
 import { PLANS } from "@/config/plans";
 import { errorMessage, newIdempotencyKey, useBilling } from "@/lib/billing/use-billing";
@@ -294,7 +292,6 @@ export default function PropertyPhotoEditorPage() {
   const [aiProvider, setAiProvider] = useState<AiProvider>("google");
   const [aiBusy, setAiBusy] = useState<null | "edit" | "detect">(null);
   const [detectedBoxes, setDetectedBoxes] = useState<DetectedBox[]>([]);
-  const [resizePresetId, setResizePresetId] = useState<string>(RESIZE_PRESETS[0].id);
 
   const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -552,33 +549,6 @@ export default function PropertyPhotoEditorPage() {
     }
   };
 
-  const handleResizeDownload = async () => {
-    const canvas = activeCanvasRef.current;
-    const preset = RESIZE_PRESETS.find((p) => p.id === resizePresetId);
-    if (!canvas || !preset) return;
-    const plan = planResize(canvas.width, canvas.height, preset);
-    const out = document.createElement("canvas");
-    out.width = plan.outWidth;
-    out.height = plan.outHeight;
-    const octx = out.getContext("2d");
-    if (!octx) return;
-    octx.imageSmoothingEnabled = true;
-    octx.imageSmoothingQuality = "high";
-    if (preset.format === "image/jpeg") {
-      octx.fillStyle = "#fff";
-      octx.fillRect(0, 0, out.width, out.height);
-    }
-    octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, plan.outWidth, plan.outHeight);
-    const blob = await canvasToBlob(out, preset.format, preset.quality);
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Brighton-${preset.id}-${plan.outWidth}x${plan.outHeight}.${preset.format === "image/png" ? "png" : "jpg"}`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 2_000);
-    showToast(`Foto ${plan.outWidth}×${plan.outHeight} (${Math.round(blob.size / 1024)} KB) diunduh.`);
-  };
 
   // Apply the directive with strict pixel adherence
   const handleExecuteDirective = () => {
@@ -723,10 +693,10 @@ export default function PropertyPhotoEditorPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Editor Foto Properti" : "Property Photo Editor"}
+      title="Edit Foto"
       subtitle={
         locale === "id"
-          ? "Pengeditan foto terarah: sensor nomor rumah, plat nomor polisi, & nomor kontak"
+          ? "Hapus nomor rumah, plat kendaraan, dan nomor kontak dari foto"
           : "Directive-guided photo editing: redact house numbers, license plates, & contact details"
       }
     >
@@ -734,38 +704,24 @@ export default function PropertyPhotoEditorPage() {
       {toastMessage && (
         <div
           role="status"
-          className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-500 text-neutral-950 font-bold shadow-2xl border border-amber-600 animate-in slide-in-from-top duration-200 text-xs"
+          className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-500 text-neutral-950 font-bold shadow-2xl border border-amber-600 animate-in slide-in-from-top duration-200 text-[13px]"
         >
           <CheckCircle2 className="w-4 h-4 text-black shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Brighton Brand & Assurance Banner */}
-      <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-neutral-950 flex items-center justify-center font-black text-lg shrink-0 shadow-xs">
-            B.
-          </div>
-          <div>
-            <h1 className="text-sm font-black uppercase tracking-tight text-[var(--text)] flex items-center gap-2">
-              <span>Brighton Photo Clean Studio</span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-amber-800 dark:text-amber-300">
-                100% Pixel Preserved
-              </span>
-            </h1>
-            <p className="text-xs text-[var(--muted)]">
-              {locale === "id"
-                ? "Dikhususkan untuk agen Brighton Real Estate: Menghapus elemen privat secara ketat mengikuti instruksi tanpa mengubah sisa foto asli."
-                : "Strictly executes privacy directives while preserving 100% of the original photo pixels outside the directive mask."}
-            </p>
-          </div>
-        </div>
-
+      {/* Upload */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p className="text-sm text-[var(--muted)]">
+          {locale === "id"
+            ? "Unggah foto, tandai area yang ingin dibersihkan, lalu unduh hasilnya."
+            : "Upload a photo, mark the area to clean, then download the result."}
+        </p>
         {/* Action CTAs: Upload custom photo */}
         <div className="flex items-center gap-2">
-          <label className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] text-xs font-bold text-[var(--text)] flex items-center gap-2 transition-colors cursor-pointer shadow-xs">
-            <Upload className="w-4 h-4 text-[var(--accent)]" />
+          <label className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] text-[13px] font-bold text-[var(--text)] flex items-center gap-2 transition-colors cursor-pointer shadow-xs">
+            <Upload className="w-4 h-4 text-[var(--accent-text)]" />
             <span>{locale === "id" ? "Unggah Foto Sendiri" : "Upload Photo"}</span>
             <input
               type="file"
@@ -784,22 +740,14 @@ export default function PropertyPhotoEditorPage() {
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
               <h2 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
-                <Wand2 className="w-4 h-4 text-[var(--accent)]" />
-                <span>{locale === "id" ? "Pilih Arahan Instruksi" : "Select Directives"}</span>
+                <Wand2 className="w-4 h-4 text-[var(--accent-text)]" />
+                <span>{locale === "id" ? "Apa yang ingin dihapus?" : "What to remove?"}</span>
               </h2>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">
-                Instruksi Terpandu
-              </span>
             </div>
 
             {/* Directive Preset Pills */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--text)] block">
-                {locale === "id"
-                  ? "Instruksi Standar Agen Brighton:"
-                  : "Brighton Standard Directives:"}
-              </label>
-              <div className="grid grid-cols-1 gap-2 text-xs">
+              <div className="grid grid-cols-1 gap-2 text-[13px]">
                 {PRESET_DIRECTIVES.map((d) => {
                   const isSelected = selectedDirectiveType === d.type;
                   const Icon =
@@ -824,26 +772,17 @@ export default function PropertyPhotoEditorPage() {
                     >
                       <div
                         className={`p-2 rounded-lg shrink-0 ${
-                          isSelected ? "bg-black/10 text-neutral-950" : "bg-[var(--surface)] text-[var(--accent)]"
+                          isSelected ? "bg-black/10 text-neutral-950" : "bg-[var(--surface)] text-[var(--accent-text)]"
                         }`}
                       >
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs">{d.title}</span>
-                          <span
-                            className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                              isSelected
-                                ? "bg-black/20 text-neutral-950"
-                                : "bg-[var(--surface)] text-[var(--muted)]"
-                            }`}
-                          >
-                            {d.badge}
-                          </span>
+                          <span className="font-bold text-[13px]">{d.title}</span>
                         </div>
                         <p
-                          className={`text-[11px] mt-0.5 leading-relaxed ${
+                          className={`text-[13px] mt-0.5 leading-relaxed ${
                             isSelected ? "text-neutral-900" : "text-[var(--muted)]"
                           }`}
                         >
@@ -858,11 +797,8 @@ export default function PropertyPhotoEditorPage() {
 
             {/* Detailed Text Instruction Input */}
             <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-              <label className="text-xs font-bold text-[var(--text)] flex items-center justify-between">
-                <span>{locale === "id" ? "Spesifikasi Instruksi *" : "Directive Details *"}</span>
-                <span className="text-[10px] text-[var(--muted)] font-normal">
-                  Ketetapan area & tekstur
-                </span>
+              <label className="text-[13px] font-bold text-[var(--text)] flex items-center justify-between">
+                <span>{locale === "id" ? "Catatan untuk AI" : "Notes for AI"}</span>
               </label>
               <textarea
                 rows={3}
@@ -872,19 +808,19 @@ export default function PropertyPhotoEditorPage() {
                   if (instructionError) setInstructionError(null);
                 }}
                 placeholder="Contoh: Sensor plat nomor rumah 42 pada pilar, jangan ubah dinding lain..."
-                className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] font-medium resize-none focus:border-[var(--accent)]"
+                className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)] font-medium resize-none focus:border-[var(--accent)]"
               />
               {instructionError && (
-                <p className="text-[11px] text-rose-600 font-medium">{instructionError}</p>
+                <p className="text-[13px] text-rose-600 font-medium">{instructionError}</p>
               )}
             </div>
 
             {/* Redaction / Patch Method Selection */}
             <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-              <label className="text-xs font-bold text-[var(--text)] block">
-                {locale === "id" ? "Metode Penyamaran / Sensor:" : "Redaction Technique:"}
+              <label className="text-[13px] font-bold text-[var(--text)] block">
+                {locale === "id" ? "Cara menghapus" : "Method"}
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[13px]">
                 {(
                   [
                     { id: "ai_inpaint", label: "AI Hapus", desc: "Paling rapi" },
@@ -903,9 +839,9 @@ export default function PropertyPhotoEditorPage() {
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
                     }`}
                   >
-                    <div className="font-bold text-[11px]">{m.label}</div>
+                    <div className="font-bold text-[13px]">{m.label}</div>
                     <div
-                      className={`text-[9px] ${
+                      className={`text-xs ${
                         patchMethod === m.id ? "text-neutral-900" : "text-[var(--muted)]"
                       }`}
                     >
@@ -917,15 +853,15 @@ export default function PropertyPhotoEditorPage() {
             </div>
 
             {/* AI options */}
-            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3 text-xs">
+            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3 text-[13px]">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-bold text-[var(--text)]">Bantuan AI</span>
                 {billing.mode === "live" && billing.usage && billing.limits ? (
-                  <span className="font-mono text-[10px] text-[var(--muted)]">
+                  <span className="font-mono text-xs text-[var(--muted)]">
                     {PLANS[billing.planId].name} · edit {billing.usage.ai_photo}/{billing.limits.ai_photo}
                   </span>
                 ) : (
-                  <span className="font-mono text-[10px] text-[var(--muted)]">
+                  <span className="font-mono text-xs text-[var(--muted)]">
                     {billing.mode === "signed-out" ? "Perlu login" : "Mode demo"}
                   </span>
                 )}
@@ -936,7 +872,7 @@ export default function PropertyPhotoEditorPage() {
                 disabled={aiBusy !== null}
                 className="w-full py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] font-bold flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {aiBusy === "detect" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4 text-[var(--accent)]" />}
+                {aiBusy === "detect" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4 text-[var(--accent-text)]" />}
                 <span>Deteksi otomatis nomor rumah, telepon, dan plat</span>
               </button>
               {detectedBoxes.length > 0 && (
@@ -947,7 +883,7 @@ export default function PropertyPhotoEditorPage() {
                         key={`${b.x}-${b.y}-${i}`}
                         type="button"
                         onClick={() => setTargetRegion({ x: b.x, y: b.y, width: b.width, height: b.height })}
-                        className="px-2 py-1 rounded-md border border-cyan-500/50 bg-cyan-500/10 text-[11px]"
+                        className="px-2 py-1 rounded-md border border-cyan-500/50 bg-cyan-500/10 text-[13px]"
                       >
                         {i + 1}. {b.label}
                       </button>
@@ -985,19 +921,9 @@ export default function PropertyPhotoEditorPage() {
                   })}
                 </div>
               )}
-              <p className="text-[10px] text-[var(--muted)] leading-relaxed">
+              <p className="text-xs text-[var(--muted)] leading-relaxed">
                 Hanya area yang ditandai yang diganti dengan hasil AI; bagian foto lain tetap asli. Deteksi memakai 1 kuota pesan, hapus memakai 1 kuota edit foto. Pakai hanya untuk foto milik Anda atau kantor.
               </p>
-            </div>
-
-            {/* Target Coordinate Indicator */}
-            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs flex items-center justify-between">
-              <span className="text-[var(--muted)] text-[11px]">Koordinat Target Terpilih:</span>
-              <span className="font-mono font-bold text-[var(--text)]">
-                {targetRegion
-                  ? formatRegionCoordinates(targetRegion)
-                  : "Belum Ditandai"}
-              </span>
             </div>
 
             {/* Execute Directive Button */}
@@ -1005,14 +931,14 @@ export default function PropertyPhotoEditorPage() {
               type="button"
               onClick={handleExecuteDirective}
               disabled={aiBusy !== null}
-              className="w-full py-3 disabled:opacity-60 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer uppercase tracking-wider"
+              className="w-full py-3 disabled:opacity-60 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer uppercase tracking-wider"
             >
               {aiBusy === "edit" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-neutral-950" />}
               <span>
                 {aiBusy === "edit"
                   ? "AI sedang memproses..."
                   : locale === "id"
-                    ? "Jalankan Instruksi (Terapkan Edit)"
+                    ? "Terapkan"
                     : "Execute Privacy Directive"}
               </span>
             </button>
@@ -1020,9 +946,9 @@ export default function PropertyPhotoEditorPage() {
 
           {/* Sample Property Photos Picker */}
           <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
-            <h3 className="text-xs font-bold text-[var(--text)] flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[var(--accent)]" />
-              <span>{locale === "id" ? "Coba Contoh Foto Properti:" : "Try Sample Photos:"}</span>
+            <h3 className="text-[13px] font-bold text-[var(--text)] flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[var(--accent-text)]" />
+              <span>{locale === "id" ? "Contoh foto" : "Sample photos"}</span>
             </h3>
             <div className="grid grid-cols-1 gap-2">
               {SAMPLE_PHOTOS.map((sample) => (
@@ -1030,14 +956,14 @@ export default function PropertyPhotoEditorPage() {
                   key={sample.id}
                   type="button"
                   onClick={() => loadSample(sample)}
-                  className={`p-2.5 rounded-xl border text-left text-xs transition-colors cursor-pointer ${
+                  className={`p-2.5 rounded-xl border text-left text-[13px] transition-colors cursor-pointer ${
                     selectedSample.id === sample.id
                       ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--text)] font-semibold"
                       : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--muted)] text-[var(--muted)]"
                   }`}
                 >
                   <div className="font-bold text-[var(--text)]">{sample.title}</div>
-                  <div className="text-[11px] text-[var(--muted)] line-clamp-1">
+                  <div className="text-[13px] text-[var(--muted)] line-clamp-1">
                     {sample.description}
                   </div>
                 </button>
@@ -1051,9 +977,9 @@ export default function PropertyPhotoEditorPage() {
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
             {/* Header Toolbar: Undo, Reset, View Mode Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[var(--border)] gap-3">
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-[13px]">
                 <span className="font-bold text-[var(--text)]">Kanvas Foto Properti</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">
                   {selectedSample.width} × {selectedSample.height} px
                 </span>
               </div>
@@ -1065,7 +991,7 @@ export default function PropertyPhotoEditorPage() {
                   onMouseDown={() => setViewOriginal(true)}
                   onMouseUp={() => setViewOriginal(false)}
                   onMouseLeave={() => setViewOriginal(false)}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl border text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
                     viewOriginal
                       ? "bg-amber-100 text-amber-900 border-amber-300"
                       : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
@@ -1080,7 +1006,7 @@ export default function PropertyPhotoEditorPage() {
                   type="button"
                   onClick={handleUndo}
                   disabled={canvasHistory.length <= 1}
-                  className="px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--surface)] disabled:opacity-40 text-xs font-semibold text-[var(--text)] flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--surface)] disabled:opacity-40 text-[13px] font-semibold text-[var(--text)] flex items-center gap-1 cursor-pointer"
                   title="Batalkan pengeditan terakhir"
                 >
                   <Undo2 className="w-3.5 h-3.5" />
@@ -1090,7 +1016,7 @@ export default function PropertyPhotoEditorPage() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-2.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-[13px] font-semibold flex items-center gap-1 cursor-pointer"
                   title="Kembalikan ke foto awal"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -1100,18 +1026,15 @@ export default function PropertyPhotoEditorPage() {
             </div>
 
             {/* Instruction Guidance Box */}
-            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between text-xs">
+            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between text-[13px]">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[var(--text)] font-medium">
                   {locale === "id"
-                    ? "💡 Klik dan drag pada kanvas untuk menentukan kotak area target yang ingin disensor."
+                    ? "Klik dan geser di foto untuk menandai area."
                     : "💡 Click and drag directly on the canvas to designate target redaction box."}
                 </span>
               </div>
-              <span className="text-[10px] text-[var(--muted)] font-mono">
-                {appliedDirectives.length} Arahan Diterapkan
-              </span>
             </div>
 
             {/* Canvas Viewport Container */}
@@ -1182,113 +1105,89 @@ export default function PropertyPhotoEditorPage() {
             </div>
 
             {/* Action Export Bar */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs text-[var(--muted)] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>100% Bagian Lain Foto Tidak Tersentuh & Utuh</span>
-              </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3">
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={handleDownloadCleanPhoto}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--bg)] text-xs font-bold text-[var(--text)] flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--bg)] text-[13px] font-bold text-[var(--text)] flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
-                  <Download className="w-4 h-4 text-[var(--accent)]" />
-                  <span>Unduh Foto Bersih (PNG)</span>
+                  <Download className="w-4 h-4 text-[var(--accent-text)]" />
+                  <span>Unduh PNG</span>
                 </button>
 
                 <Link
                   href="/flyer"
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
-                  <span>Gunakan di Flyer Studio</span>
+                  <span>Pakai di flyer</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* Resize & compress (free, runs in the browser) */}
-          <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
-            <h3 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
-              <Crop className="w-4 h-4 text-[var(--accent)]" />
-              <span>Resize &amp; Kompres</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">Gratis · tanpa AI</span>
-            </h3>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={resizePresetId}
-                onChange={(e) => setResizePresetId(e.target.value)}
-                className="flex-1 px-3 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)]"
-                aria-label="Ukuran tujuan"
-              >
-                {RESIZE_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
-              <button
-                type="button"
-                onClick={handleResizeDownload}
-                className="px-4 py-2.5 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Unduh ukuran ini</span>
-              </button>
-            </div>
-            <p className="text-[11px] text-[var(--muted)]">
-              Format persegi/portrait dipotong dari tengah. &ldquo;WhatsApp hemat&rdquo; hanya mengecilkan tanpa memotong. Hasil edit di atas ikut terbawa.
-            </p>
-          </div>
+          <Link
+            href="/photo-tools"
+            className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] flex items-center justify-between gap-3"
+          >
+            <span className="flex items-center gap-3">
+              <Crop className="w-5 h-5 text-[var(--accent-text)]" />
+              <span>
+                <span className="font-bold block text-sm">Ukuran &amp; HD</span>
+                <span className="text-[13px] text-[var(--muted)]">Perkecil ukuran file, ubah dimensi, atau perjelas foto.</span>
+              </span>
+            </span>
+            <ArrowRight className="w-4 h-4 text-[var(--muted)]" />
+          </Link>
 
           {/* Applied Directives Audit Trail Table */}
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
               <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-[var(--accent)]" />
+                <FileCheck className="w-4 h-4 text-[var(--accent-text)]" />
                 <h3 className="text-sm font-bold text-[var(--text)]">
                   {locale === "id"
-                    ? "Daftar Audit Arahan yang Diterapkan"
+                    ? "Riwayat edit"
                     : "Applied Directives Audit Log"}
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[var(--accent)]/15 text-amber-800 dark:text-amber-300">
-                {appliedDirectives.length} Eksekusi
+              <span className="px-2 py-0.5 rounded-full text-[13px] font-mono font-bold bg-[var(--accent)]/15 text-amber-800 dark:text-amber-300">
+                {appliedDirectives.length}
               </span>
             </div>
 
             {appliedDirectives.length === 0 ? (
-              <div className="py-6 text-center text-[var(--muted)] text-xs space-y-1">
-                <p>Belum ada instruksi yang diterapkan pada foto ini.</p>
-                <p className="text-[11px] text-[var(--muted)]">
-                  Pilih instruksi di panel kiri dan klik <strong>Jalankan Instruksi</strong> untuk
-                  mencatat riwayat audit.
-                </p>
+              <div className="py-6 text-center text-[var(--muted)] text-[13px] space-y-1">
+                <p>Belum ada edit pada foto ini.</p>
               </div>
             ) : (
               <div className="space-y-2.5">
                 {appliedDirectives.map((d, index) => (
                   <div
                     key={d.id}
-                    className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-start justify-between gap-3 text-xs"
+                    className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-start justify-between gap-3 text-[13px]"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[var(--accent)] text-neutral-950 font-black text-[10px] flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-[var(--accent)] text-neutral-950 font-black text-xs flex items-center justify-center">
                           {appliedDirectives.length - index}
                         </span>
                         <span className="font-bold text-[var(--text)]">{d.label}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
+                        <span className="px-2 py-0.5 rounded text-xs font-mono bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
                           {getDirectiveMethodLabel(d.method)}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[var(--muted)] pl-7">
+                      <p className="text-[13px] text-[var(--muted)] pl-7">
                         &ldquo;{d.instruction}&rdquo;
                       </p>
-                      <div className="text-[10px] text-[var(--muted)] font-mono pl-7">
-                        Area: {formatRegionCoordinates(d.region)} · Pukul {d.timestamp}
+                      <div className="text-xs text-[var(--muted)] font-mono pl-7">
+                        Pukul {d.timestamp}
                       </div>
                     </div>
 
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1 shrink-0">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[13px] flex items-center gap-1 shrink-0">
                       <Check className="w-3.5 h-3.5" />
                       Berhasil
                     </span>

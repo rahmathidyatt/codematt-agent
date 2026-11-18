@@ -38,7 +38,7 @@ export const PRESET_DIRECTIVES: PresetDirectiveTemplate[] = [
   {
     id: "dir-house-num",
     type: "remove_house_number",
-    title: "Sensor / Hapus Nomor Rumah",
+    title: "Hapus nomor rumah",
     description: "Hapus plat nomor rumah di pilar pagar atau tembok depan untuk privasi pemilik tanpa mengubah arsitektur bangunan.",
     defaultMethod: "inpaint",
     badge: "Privasi Utama",
@@ -47,7 +47,7 @@ export const PRESET_DIRECTIVES: PresetDirectiveTemplate[] = [
   {
     id: "dir-license-plate",
     type: "remove_license_plate",
-    title: "Sensor Plat Nomor Kendaraan",
+    title: "Samarkan plat kendaraan",
     description: "Samarkan atau hilangkan plat nomor mobil/motor yang terparkir di carport atau depan gerbang properti.",
     defaultMethod: "blur",
     badge: "Sensor Plat Mobil",
@@ -56,7 +56,7 @@ export const PRESET_DIRECTIVES: PresetDirectiveTemplate[] = [
   {
     id: "dir-phone-banner",
     type: "remove_phone_banner",
-    title: "Hapus Nomor HP / Spanduk Lama",
+    title: "Hapus nomor HP dan spanduk lama",
     description: "Bersihkan spanduk 'DIJUAL' lama, nomor telepon agen terdahulu, atau papan kontak yang mengganggu.",
     defaultMethod: "inpaint",
     badge: "Clean Listing",
@@ -65,7 +65,7 @@ export const PRESET_DIRECTIVES: PresetDirectiveTemplate[] = [
   {
     id: "dir-wires-clutter",
     type: "remove_wires",
-    title: "Bersihkan Kabel & Distraksi Visual",
+    title: "Bersihkan kabel dan benda mengganggu",
     description: "Rapikan kabel listrik melintang, tempat sampah, atau noda visual kecil di trotoar depan properti.",
     defaultMethod: "inpaint",
     badge: "Estetika Bangunan",

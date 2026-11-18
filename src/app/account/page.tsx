@@ -65,11 +65,11 @@ export default function AccountPage() {
             <div className="rounded-lg border border-[var(--border)] p-4 text-sm">
               <p className="font-semibold">Login terverifikasi oleh layanan autentikasi</p>
               <p className="text-[var(--muted)] break-all">{account.user?.email || "Pengguna"}</p>
-              <p className="text-xs text-[var(--muted)] mt-2">Sesi hanya berlaku sementara. Data demo pada perangkat ini belum dipindahkan ke akun Anda.</p>
+              <p className="text-[13px] text-[var(--muted)] mt-2">Sesi hanya berlaku sementara. Data demo pada perangkat ini belum dipindahkan ke akun Anda.</p>
             </div>
             <div className="space-y-2">
               <h2 className="font-semibold">Listing tersimpan di server</h2>
-              <p className="text-xs text-[var(--muted)]">{databaseStatus}</p>
+              <p className="text-[13px] text-[var(--muted)]">{databaseStatus}</p>
               {items.map((item) => (
                 <div key={item.id} className="text-sm border border-[var(--border)] rounded-lg p-3">
                   <strong>{item.name}</strong> · {item.location}
@@ -82,7 +82,7 @@ export default function AccountPage() {
             </button>
           </>
         )}
-        <div className="border-t border-[var(--border)] pt-4 text-xs">
+        <div className="border-t border-[var(--border)] pt-4 text-[13px]">
           <Link href="/dashboard" className="underline">Buka workspace demo</Link>
           <p className="mt-1 text-[var(--muted)]">
             Workspace demo menggunakan penyimpanan browser yang terpisah dari akun, bukan data privat di server.

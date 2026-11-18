@@ -7,7 +7,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
-import { useAgentStore } from "@/lib/store";
 
 interface Lead {
   id: string;
@@ -50,26 +49,24 @@ const SAMPLE_LEADS: Lead[] = [
 ];
 
 export default function LeadsPage() {
-  const { locale } = useAgentStore();
   const [leads] = useState<Lead[]>(SAMPLE_LEADS);
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Kontak & Prospek Klien" : "Leads & Prospects"}
-      subtitle={locale === "id" ? "Pantau calon pembeli, preferensi unit, dan jadwal survei" : "Track prospective buyers, unit interests, and inspection schedules"}
+      title="Kontak Prospek"
+      subtitle="Calon pembeli, unit yang diminati, dan jadwal survei"
     >
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
           <div>
-            <h2 className="text-base font-bold text-[var(--text)]">Pipeline Calon Pembeli Aktif</h2>
-            <p className="text-xs text-[var(--muted)]">3 prospek berkualifikasi tinggi dalam tindak lanjut minggu ini</p>
+            <h2 className="text-base font-bold text-[var(--text)]">Calon pembeli</h2>
           </div>
           <Link
             href="/followup"
-            className="px-3.5 py-2 rounded-xl bg-[var(--accent)] text-white text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto hover:opacity-90 shadow-xs"
+            className="px-3.5 py-2 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-semibold flex items-center gap-1.5 self-start sm:self-auto hover:opacity-90 shadow-xs"
           >
             <MessageSquare className="w-4 h-4" />
-            <span>Kirim Pesan Follow-up</span>
+            <span>Tulis follow-up</span>
           </Link>
         </div>
 
@@ -80,32 +77,32 @@ export default function LeadsPage() {
               className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[var(--accent)] bg-[var(--bg)] px-2.5 py-1 rounded-md border border-[var(--border)]">
+                <span className="text-[13px] font-bold text-[var(--accent-text)] bg-[var(--bg)] px-2.5 py-1 rounded-md border border-[var(--border)]">
                   {lead.stage}
                 </span>
-                <span className="text-[11px] font-mono text-[var(--muted)] font-semibold">
+                <span className="text-[13px] font-mono text-[var(--muted)] font-semibold">
                   Budget: {lead.budget}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-base font-bold text-[var(--text)]">{lead.name}</h3>
-                <p className="text-xs text-[var(--muted)] mt-0.5">{lead.phone}</p>
+                <p className="text-[13px] text-[var(--muted)] mt-0.5">{lead.phone}</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs space-y-1">
-                <span className="font-semibold text-[var(--text)] block">Minat Properti:</span>
+              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[13px] space-y-1">
+                <span className="font-semibold text-[var(--text)] block">Minat</span>
                 <p className="text-[var(--muted)]">{lead.propertyInterest}</p>
               </div>
 
-              <p className="text-xs text-[var(--muted)] italic">
+              <p className="text-[13px] text-[var(--muted)] italic">
                 &ldquo;{lead.notes}&rdquo;
               </p>
 
               <div className="pt-3 border-t border-[var(--border)] flex justify-between items-center">
                 <Link
                   href="/followup"
-                  className="text-xs font-semibold text-[var(--accent)] hover:underline flex items-center gap-1"
+                  className="text-[13px] font-semibold text-[var(--accent-text)] hover:underline flex items-center gap-1"
                 >
                   <span>Chat WhatsApp</span>
                   <ArrowRight className="w-3.5 h-3.5" />

@@ -63,10 +63,10 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
                 className="text-base font-bold text-[var(--text)] tracking-tight"
               >
                 {locale === "id"
-                  ? "Program Beta Komersial · Brighton Real Estate"
-                  : "Commercial Beta Program · Brighton Cohort"}
+                  ? "Kirim masukan"
+                  : "Send feedback"}
               </h2>
-              <p className="text-xs text-[var(--muted)]">
+              <p className="text-[13px] text-[var(--muted)]">
                 {locale === "id"
                   ? "Evaluasi operasional harian & masukan fitur fase akhir"
                   : "Daily operational evaluation & concluding stage feedback"}
@@ -93,12 +93,12 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
               <h3 className="text-base font-bold text-[var(--text)]">
                 Terima Kasih atas Masukan Anda!
               </h3>
-              <p className="text-xs text-[var(--muted)] max-w-xs mx-auto">
-                Masukan operasional Anda telah dicatat dalam ledger cohort beta komersial Brighton.
+              <p className="text-[13px] text-[var(--muted)] max-w-xs mx-auto">
+                Terima kasih, masukan Anda sudah tersimpan.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+            <form onSubmit={handleSubmit} className="space-y-5 text-[13px]">
               {/* Star Rating */}
               <div>
                 <label className="block font-semibold text-[var(--text)] mb-2">
@@ -119,7 +119,7 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
                       <Star className="w-6 h-6 fill-current" />
                     </button>
                   ))}
-                  <span className="text-xs font-bold font-mono ml-2 text-[var(--text)]">
+                  <span className="text-[13px] font-bold font-mono ml-2 text-[var(--text)]">
                     {rating} / 5 Bintang
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
-                <span className="text-[11px] text-[var(--muted)]">
+                <span className="text-[13px] text-[var(--muted)]">
                   Dikirim sebagai: <strong>{agent.name}</strong> ({agent.office})
                 </span>
 
@@ -188,16 +188,16 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
 
           {/* Recent Cohort Feedback Snapshot */}
           <div className="pt-4 border-t border-[var(--border)] space-y-3">
-            <span className="text-[10px] font-bold uppercase text-[var(--muted)] tracking-wider">
+            <span className="text-xs font-bold uppercase text-[var(--muted)] tracking-wider">
               Catatan Terkini Cohort Beta:
             </span>
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {betaFeedbackList.slice(0, 3).map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs space-y-1"
+                  className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[13px] space-y-1"
                 >
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="font-bold text-[var(--text)]">{item.agentName}</span>
                     <div className="flex items-center text-[#f5b800]">
                       {Array.from({ length: item.rating }).map((_, i) => (
@@ -205,7 +205,7 @@ export function BetaFeedbackModal({ isOpen, onClose }: BetaFeedbackModalProps) {
                       ))}
                     </div>
                   </div>
-                  <p className="text-[11px] text-[var(--muted)] line-clamp-2">
+                  <p className="text-[13px] text-[var(--muted)] line-clamp-2">
                     &ldquo;{item.feedback}&rdquo;
                   </p>
                 </div>

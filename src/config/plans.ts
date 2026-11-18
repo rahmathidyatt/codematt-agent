@@ -31,7 +31,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     providers: ["google"],
     highlights: [
       "Chat AI dengan Gemini",
-      "Resize & kompres foto tanpa batas",
+      "Ubah ukuran & HD standar tanpa batas",
       "3 edit foto AI per bulan",
     ],
   },

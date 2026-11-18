@@ -79,14 +79,14 @@ export function SavePresetModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent)]/10 text-[var(--accent-text)] flex items-center justify-center">
               <BookmarkPlus className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-[var(--text)]">
                 {locale === "id" ? "Simpan Layout Sebagai Preset" : "Save Layout As Preset"}
               </h3>
-              <p className="text-xs text-[var(--muted)]">
+              <p className="text-[13px] text-[var(--muted)]">
                 {locale === "id"
                   ? "Simpan konfigurasi flyer saat ini agar dapat digunakan kembali kapan saja."
                   : "Save current flyer setup to recall anytime with one click."}
@@ -103,21 +103,21 @@ export function SavePresetModal({
         </div>
 
         {/* Current Config Snapshot Card */}
-        <div className="p-3.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-2 text-xs">
-          <span className="font-semibold text-[var(--muted)] text-[11px] block uppercase tracking-wider">
+        <div className="p-3.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-2 text-[13px]">
+          <span className="font-semibold text-[var(--muted)] text-[13px] block uppercase tracking-wider">
             {locale === "id" ? "Konfigurasi yang Disimpan:" : "Configuration Snapshot:"}
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
-              <span className="text-[10px] text-[var(--muted)] block">Ukuran / Format</span>
+              <span className="text-xs text-[var(--muted)] block">Ukuran / Format</span>
               <span className="font-bold text-[var(--text)]">{formatAspectDisplay(currentConfig.size)}</span>
             </div>
             <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
-              <span className="text-[10px] text-[var(--muted)] block">Tema Visual</span>
+              <span className="text-xs text-[var(--muted)] block">Tema Visual</span>
               <span className="font-bold text-[var(--text)] capitalize">{currentConfig.template}</span>
             </div>
             <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] col-span-2 sm:col-span-1">
-              <span className="text-[10px] text-[var(--muted)] block">Mode Branding</span>
+              <span className="text-xs text-[var(--muted)] block">Mode Branding</span>
               <span
                 className={`font-bold ${
                   currentConfig.showBranding ? "text-emerald-600" : "text-amber-600"
@@ -130,7 +130,7 @@ export function SavePresetModal({
         </div>
 
         {/* Form Inputs */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-[13px]">
           {error && (
             <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300">
               {error}
@@ -192,13 +192,13 @@ export function SavePresetModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text)] text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text)] text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
             >
               {locale === "id" ? "Batal" : "Cancel"}
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-[var(--accent)] text-white text-xs font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-5 py-2 bg-[var(--accent)] text-neutral-950 text-[13px] font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Check className="w-3.5 h-3.5" />
               <span>{locale === "id" ? "Simpan Preset" : "Save Preset"}</span>

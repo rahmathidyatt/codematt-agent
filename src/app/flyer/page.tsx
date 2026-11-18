@@ -6,26 +6,16 @@ import {
   Palette,
   Download,
   RefreshCw,
-  Eye,
-  EyeOff,
-  Layers,
   Sparkles,
   CheckCircle2,
-  History,
   FileImage,
-  ShieldCheck,
-  Clock,
   Trash2,
-  Search,
-  Copy,
-  Check,
-  X,
   Bookmark,
   BookmarkPlus,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
-import { flyerSizes, FlyerSize, FlyerExportRecord, FlyerPreset } from "@/features/flyer/contracts";
+import { flyerSizes, FlyerSize, FlyerPreset } from "@/features/flyer/contracts";
 import { FlyerGalleryView } from "@/components/flyer/FlyerGalleryView";
 import { SavePresetModal } from "@/components/flyer/SavePresetModal";
 
@@ -80,16 +70,7 @@ export default function FlyerStudioPage() {
   // Export History filters & modals
   const [historySearch, setHistorySearch] = useState<string>("");
   const [historyModeFilter, setHistoryModeFilter] = useState<"all" | "branded" | "clean">("all");
-  const [selectedRecordForVerification, setSelectedRecordForVerification] = useState<FlyerExportRecord | null>(null);
-  const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
-  const handleCopyHash = (hash: string, id: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(hash);
-      setCopiedHashId(id);
-      setTimeout(() => setCopiedHashId(null), 2000);
-    }
-  };
 
   // Gallery View & Preset Management State
   const [activeView, setActiveView] = useState<"editor" | "gallery">("editor");
@@ -533,18 +514,14 @@ export default function FlyerStudioPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Flyer Studio 300 DPI" : "Flyer Studio 300 DPI"}
-      subtitle={
-        locale === "id"
-          ? "Desain flyer multi-ukuran siap cetak dengan QR WhatsApp & mode co-broke"
-          : "Multi-format print-ready flyer engine with dynamic QR codes & co-broke mode"
-      }
+      title="Pembuat Flyer"
+      subtitle="Flyer siap posting dan siap cetak"
     >
       {/* Toast Notification */}
       {toastMessage && (
         <div
           role="status"
-          className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-emerald-900 text-white shadow-2xl border border-emerald-700 animate-in slide-in-from-top duration-200 text-xs font-semibold"
+          className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-emerald-900 text-white shadow-2xl border border-emerald-700 animate-in slide-in-from-top duration-200 text-[13px] font-semibold"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
@@ -559,9 +536,9 @@ export default function FlyerStudioPage() {
             type="button"
             onClick={() => setActiveView("editor")}
             data-testid="tab-editor"
-            className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeView === "editor"
-                ? "bg-[var(--accent)] text-white shadow-xs"
+                ? "bg-[var(--accent)] text-neutral-950 shadow-xs"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
             }`}
           >
@@ -572,19 +549,19 @@ export default function FlyerStudioPage() {
             type="button"
             onClick={() => setActiveView("gallery")}
             data-testid="tab-gallery"
-            className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeView === "gallery"
-                ? "bg-[var(--accent)] text-white shadow-xs"
+                ? "bg-[var(--accent)] text-neutral-950 shadow-xs"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
             }`}
           >
             <Bookmark className="w-4 h-4" />
             <span>{locale === "id" ? "Galeri Layout & Preset" : "Layout Gallery & Presets"}</span>
             <span
-              className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+              className={`ml-1 px-1.5 py-0.5 rounded-full text-xs font-mono ${
                 activeView === "gallery"
                   ? "bg-white/20 text-white"
-                  : "bg-[var(--surface)] text-[var(--accent)]"
+                  : "bg-[var(--surface)] text-[var(--accent-text)]"
               }`}
             >
               {flyerPresets.length}
@@ -595,7 +572,7 @@ export default function FlyerStudioPage() {
         {/* Active Preset Indicator & Save Layout CTA */}
         <div className="flex items-center gap-2.5">
           {activePresetName && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold border border-[var(--accent)]/20">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--accent)]/10 text-[var(--accent-text)] text-[13px] font-semibold border border-[var(--accent)]/20">
               <Sparkles className="w-3.5 h-3.5" />
               <span className="truncate max-w-[240px]">
                 {locale === "id" ? "Preset Aktif:" : "Active:"} <strong>{activePresetName}</strong>
@@ -606,7 +583,7 @@ export default function FlyerStudioPage() {
             type="button"
             onClick={() => setIsSaveModalOpen(true)}
             data-testid="header-save-preset-btn"
-            className="px-3.5 py-2 rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-opacity text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-2 rounded-xl bg-[var(--accent)] text-neutral-950 hover:opacity-90 transition-opacity text-[13px] font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <BookmarkPlus className="w-3.5 h-3.5" />
             <span>{locale === "id" ? "Simpan Layout Saat Ini" : "Save Current Layout"}</span>
@@ -623,14 +600,14 @@ export default function FlyerStudioPage() {
               {/* Quick Preset Selector Dropdown */}
               <div className="p-3.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
-                    <Bookmark className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  <label className="text-[13px] font-bold text-[var(--text)] flex items-center gap-1.5">
+                    <Bookmark className="w-3.5 h-3.5 text-[var(--accent-text)]" />
                     <span>{locale === "id" ? "Pilih dari Preset Layout:" : "Load Layout Preset:"}</span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setActiveView("gallery")}
-                    className="text-[11px] font-semibold text-[var(--accent)] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[13px] font-semibold text-[var(--accent-text)] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>
                       {locale === "id"
@@ -645,7 +622,7 @@ export default function FlyerStudioPage() {
                     const p = flyerPresets.find((item) => item.id === e.target.value);
                     if (p) handleApplyPreset(p);
                   }}
-                  className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] font-medium"
+                  className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)] font-medium"
                 >
                   <option value="" disabled>
                     -- {locale === "id" ? "Pilih Preset Favorit" : "Select Favorite Preset"} --
@@ -653,7 +630,7 @@ export default function FlyerStudioPage() {
                   {flyerPresets.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.size.toUpperCase()} · {p.template} ·{" "}
-                      {p.showBranding ? "Branded" : "Clean"})
+                      {p.showBranding ? "dengan kontak" : "tanpa kontak"})
                     </option>
                   ))}
                 </select>
@@ -661,21 +638,20 @@ export default function FlyerStudioPage() {
 
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
                 <h2 className="text-base font-bold text-[var(--text)] flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-[var(--accent)]" />
-                  <span>{locale === "id" ? "Format & Layout Flyer" : "Flyer Format & Styles"}</span>
+                  <Palette className="w-4 h-4 text-[var(--accent-text)]" />
+                  <span>Ukuran &amp; gaya</span>
                 </h2>
-                <span className="text-xs font-mono font-bold text-emerald-600">300 DPI Ready</span>
               </div>
 
               {/* Quick Preload Picker */}
               <div>
-              <label className="text-xs font-semibold text-[var(--muted)] block mb-1.5">
+              <label className="text-[13px] font-semibold text-[var(--muted)] block mb-1.5">
                 {locale === "id" ? "Gunakan Data Listing:" : "Load Listing Data:"}
               </label>
               <select
                 value={selectedListingId}
                 onChange={(e) => handleSelectListing(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)]"
+                className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)]"
               >
                 {listings.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -687,10 +663,10 @@ export default function FlyerStudioPage() {
 
             {/* Size Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--text)] block">
+              <label className="text-[13px] font-semibold text-[var(--text)] block">
                 {locale === "id" ? "Pilih Ukuran Format:" : "Select Canvas Size:"}
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[13px]">
                 {(
                   [
                     { id: "square", label: "Square (1:1)", desc: "1080×1080 Feed" },
@@ -706,12 +682,12 @@ export default function FlyerStudioPage() {
                     onClick={() => setSize(s.id)}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       size === s.id
-                        ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-xs font-semibold"
+                        ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] shadow-xs font-semibold"
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)] hover:border-[var(--muted)]"
                     }`}
                   >
                     <div className="font-bold">{s.label}</div>
-                    <div className={`text-[10px] ${size === s.id ? "text-white/80" : "text-[var(--muted)]"}`}>
+                    <div className={`text-xs ${size === s.id ? "text-white/80" : "text-[var(--muted)]"}`}>
                       {s.desc}
                     </div>
                   </button>
@@ -721,10 +697,10 @@ export default function FlyerStudioPage() {
 
             {/* Template Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--text)] block">
+              <label className="text-[13px] font-semibold text-[var(--text)] block">
                 {locale === "id" ? "Gaya Tema Visual:" : "Visual Theme:"}
               </label>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-[13px]">
                 {(
                   [
                     { id: "modern", label: "Modern Clean" },
@@ -738,7 +714,7 @@ export default function FlyerStudioPage() {
                     onClick={() => setTemplate(t.id)}
                     className={`py-2 px-3 rounded-lg border text-center transition-all ${
                       template === t.id
-                        ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold shadow-xs"
+                        ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] font-semibold shadow-xs"
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
                     }`}
                   >
@@ -748,60 +724,23 @@ export default function FlyerStudioPage() {
               </div>
             </div>
 
-            {/* Preview Mode / Overlay Switcher Card */}
-            <div className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[var(--accent)]" />
-                  <span className="text-xs font-bold text-[var(--text)]">
-                    {locale === "id" ? "Overlay Branding & QR" : "Branding & QR Overlays"}
-                  </span>
-                </div>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                    showBranding
-                      ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
-                      : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
-                  }`}
-                >
-                  {showBranding
-                    ? locale === "id"
-                      ? "Mode Lengkap"
-                      : "Branded Mode"
-                    : locale === "id"
-                    ? "Mode Bersih"
-                    : "Clean Mode"}
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-                {locale === "id"
-                  ? "Sembunyikan branding agen dan QR code untuk keperluan co-broking, portal independen, atau presentasi netral."
-                  : "Hide agent branding and QR code for co-broking with other agents or unbranded MLS portal submissions."}
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowBranding((prev) => !prev)}
-                className="w-full mt-1 py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--bg)] text-xs font-semibold text-[var(--text)] flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                {showBranding ? (
-                  <EyeOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                ) : (
-                  <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                )}
-                <span>
-                  {showBranding
-                    ? locale === "id"
-                      ? "Ganti ke Mode Bersih (Tanpa Branding)"
-                      : "Switch to Clean Mode (No Branding)"
-                    : locale === "id"
-                    ? "Ganti ke Mode Lengkap (Dengan Branding)"
-                    : "Switch to Branded Mode (With Agent & QR)"}
-                </span>
-              </button>
-            </div>
+            {/* Contact & QR switch */}
+            <label className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showBranding}
+                onChange={(e) => setShowBranding(e.target.checked)}
+                data-testid="toggle-preview-mode"
+                className="mt-1 w-4 h-4 accent-[var(--accent)]"
+              />
+              <span>
+                <span className="text-sm font-bold block">Tampilkan kontak &amp; QR saya</span>
+                <span className="text-[13px] text-[var(--muted)]">Matikan untuk flyer co-broke yang dibagikan ke agen lain.</span>
+              </span>
+            </label>
 
             {/* Content Form Inputs */}
-            <div className="space-y-3 text-xs pt-2 border-t border-[var(--border)]">
+            <div className="space-y-3 text-[13px] pt-2 border-t border-[var(--border)]">
               <div>
                 <label className="font-semibold text-[var(--text)] block mb-1">
                   {locale === "id" ? "Judul Flyer" : "Flyer Headline"}
@@ -847,7 +786,7 @@ export default function FlyerStudioPage() {
                   type="text"
                   value={qrDestination}
                   onChange={(e) => setQrDestination(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)] font-mono text-[11px]"
+                  className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)] font-mono text-[13px]"
                 />
               </div>
 
@@ -857,7 +796,7 @@ export default function FlyerStudioPage() {
                   type="button"
                   onClick={handleDownloadPNG}
                   disabled={exporting}
-                  className="flex-1 py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-3 bg-[var(--accent)] text-neutral-950 text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {exporting ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -866,10 +805,7 @@ export default function FlyerStudioPage() {
                   )}
                   <span>
                     {exporting
-                      ? "Merender..."
-                      : showBranding
-                      ? "Ekspor PNG (Branded & QR)"
-                      : "Ekspor PNG (Clean Co-Broke)"}
+                      ? "Membuat file..." : "Unduh PNG"}
                   </span>
                 </button>
               </div>
@@ -880,67 +816,11 @@ export default function FlyerStudioPage() {
         {/* Right Column: Live Interactive Canvas Preview */}
         <div className="lg:col-span-7 space-y-4">
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex flex-col items-center justify-center min-h-[500px]">
-            {/* Canvas Header & Interactive Toggle Preview Mode Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full pb-4 border-b border-[var(--border)] mb-4 gap-3">
-              <div>
-                <div className="text-xs font-semibold text-[var(--text)] flex items-center gap-2">
-                  <span>Pratinjau Kanvas WYSIWYG</span>
-                  <span className="px-2 py-0.5 rounded font-mono text-[10px] bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">
-                    {flyerSizes[size].width} × {flyerSizes[size].height} px · {size.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Primary Toggle Preview Mode Button */}
-              <button
-                type="button"
-                onClick={() => setShowBranding((prev) => !prev)}
-                data-testid="toggle-preview-mode"
-                aria-label="Toggle Preview Mode"
-                title="Toggle Preview Mode (Branded vs Clean / Co-Broke)"
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                  showBranding
-                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100"
-                    : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 hover:bg-amber-100"
-                }`}
-              >
-                {showBranding ? (
-                  <>
-                    <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Toggle Preview Mode: <strong>Branded (Agency & QR)</strong></span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>Toggle Preview Mode: <strong>Clean (Co-Broke / MLS)</strong></span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Mode Banner Description */}
-            <div
-              className={`w-full mb-3 px-3.5 py-2 rounded-xl text-xs flex items-center gap-2 border ${
-                showBranding
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-200"
-                  : "bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200"
-              }`}
-            >
-              {showBranding ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>
-                    <strong>Mode Lengkap Aktif:</strong> Header agensi, lisensi, profil kontak agen, dan scan QR WhatsApp ditampilkan pada flyer.
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>
-                    <strong>Mode Bersih Co-Broke Aktif:</strong> Header agensi dan QR WhatsApp disembunyikan. Spesifikasi teknis properti dimaksimalkan untuk listing bersama.
-                  </span>
-                </>
-              )}
+            <div className="flex items-center justify-between w-full pb-4 border-b border-[var(--border)] mb-4 gap-3 text-sm">
+              <span className="font-semibold">Pratinjau</span>
+              <span className="text-[var(--muted)]">
+                {flyerSizes[size].width} × {flyerSizes[size].height} px · {showBranding ? "dengan kontak & QR" : "tanpa kontak"}
+              </span>
             </div>
 
             {/* The actual HTML5 Canvas */}
@@ -955,16 +835,6 @@ export default function FlyerStudioPage() {
                 className="rounded-lg"
               />
             </div>
-
-            <p className="text-xs text-[var(--muted)] text-center mt-4">
-              {showBranding
-                ? locale === "id"
-                  ? "💡 QR Code teruji dan dapat langsung dipindai menggunakan kamera ponsel calon pembeli."
-                  : "💡 The dynamic QR code is live and can be scanned immediately with any smartphone camera."
-                : locale === "id"
-                ? "💡 Flyer mode bersih siap dibagikan kepada rekan agen (co-broking) tanpa kontak langsung."
-                : "💡 Clean flyer ready to share with co-broking agents and unbranded property portals."}
-            </p>
           </div>
         </div>
       </div>
@@ -985,406 +855,85 @@ export default function FlyerStudioPage() {
       </div>
 
       {/* Export History Section */}
-      <section
-        id="export-history"
-        data-testid="export-history-table"
-        className="mt-10 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-6"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <History className="w-5 h-5 text-[var(--accent)]" />
-              <h2 className="text-base font-bold text-[var(--text)]">
-                {locale === "id" ? "Riwayat Ekspor Flyer" : "Flyer Export History"}
-              </h2>
-              <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[var(--accent)]/10 text-[var(--accent)]">
-                {flyerExports.length} {locale === "id" ? "Berkas" : "Files"}
-              </span>
-            </div>
-            <p className="text-xs text-[var(--muted)]">
-              {locale === "id"
-                ? "Daftar unduhan flyer resolusi tinggi (300 DPI) lengkap dengan stempel waktu, mode branding, dan verifikasi integritas."
-                : "Audit trail of high-resolution (300 DPI) flyer exports with timestamps and verification status indicators."}
-            </p>
-          </div>
-
-          {/* Quick Metrics & Actions */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-xs font-mono text-[var(--muted)]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>100% 300 DPI Verified</span>
-            </div>
-            {flyerExports.length > 0 && (
-              <button
-                type="button"
-                onClick={clearFlyerExports}
-                className="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-                title={locale === "id" ? "Bersihkan Riwayat" : "Clear History"}
-              >
-                {locale === "id" ? "Hapus Riwayat" : "Clear History"}
-              </button>
-            )}
-          </div>
+      <section id="export-history" className="mt-8 p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-bold">Riwayat unduhan ({flyerExports.length})</h2>
+          {flyerExports.length > 0 && (
+            <button
+              type="button"
+              onClick={clearFlyerExports}
+              className="text-sm text-[var(--muted)] hover:text-red-600"
+            >
+              Hapus riwayat
+            </button>
+          )}
         </div>
-
-        {/* Search and Filters Toolbar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-72">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-            <input
-              type="text"
-              placeholder={locale === "id" ? "Cari berkas / properti..." : "Search files or listing..."}
-              value={historySearch}
-              onChange={(e) => setHistorySearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] focus:border-[var(--accent)]"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs">
-            <span className="text-[var(--muted)] text-[11px] font-medium mr-1">
-              {locale === "id" ? "Filter Mode:" : "Filter Mode:"}
-            </span>
-            {(
-              [
-                { id: "all", label: locale === "id" ? "Semua" : "All" },
-                { id: "branded", label: locale === "id" ? "Branded (Agency & QR)" : "Branded" },
-                { id: "clean", label: locale === "id" ? "Clean (Co-Broke)" : "Clean" },
-              ] as const
-            ).map((f) => (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="search"
+            value={historySearch}
+            onChange={(e) => setHistorySearch(e.target.value)}
+            placeholder="Cari nama file atau properti"
+            className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm"
+          />
+          <div className="flex gap-1 p-1 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm">
+            {([
+              { id: "all", label: "Semua" },
+              { id: "branded", label: "Dengan kontak" },
+              { id: "clean", label: "Tanpa kontak" },
+            ] as const).map((f) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setHistoryModeFilter(f.id)}
-                className={`px-2.5 py-1 rounded-lg border text-xs transition-all cursor-pointer ${
-                  historyModeFilter === f.id
-                    ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold"
-                    : "bg-[var(--bg)] text-[var(--muted)] border-[var(--border)] hover:text-[var(--text)]"
-                }`}
+                className={`px-3 py-1 rounded-lg ${historyModeFilter === f.id ? "bg-[var(--accent)] text-neutral-950 font-semibold" : "text-[var(--muted)]"}`}
               >
                 {f.label}
               </button>
             ))}
           </div>
         </div>
-
-        {/* Table Container */}
-        <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-          <table className="w-full min-w-[780px] text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-[var(--bg)] border-b border-[var(--border)] text-[var(--muted)] font-semibold">
-                <th className="py-2.5 px-3">{locale === "id" ? "Nama Berkas & Properti" : "File & Listing"}</th>
-                <th className="py-2.5 px-3">{locale === "id" ? "Format & Dimensi" : "Format & Size"}</th>
-                <th className="py-2.5 px-3">{locale === "id" ? "Mode Branding" : "Branding Mode"}</th>
-                <th className="py-2.5 px-3">{locale === "id" ? "Stempel Waktu" : "Export Timestamp"}</th>
-                <th className="py-2.5 px-3">{locale === "id" ? "Status Verifikasi" : "Verification Status"}</th>
-                <th className="py-2.5 px-3 text-right">{locale === "id" ? "Aksi" : "Actions"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border)]">
-              {flyerExports
-                .filter((item) => {
-                  const matchesSearch =
-                    item.filename.toLowerCase().includes(historySearch.toLowerCase()) ||
-                    item.headline.toLowerCase().includes(historySearch.toLowerCase());
-                  const matchesMode =
-                    historyModeFilter === "all" || item.mode === historyModeFilter;
-                  return matchesSearch && matchesMode;
-                })
-                .length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-[var(--muted)]">
-                    <FileImage className="w-8 h-8 mx-auto mb-2 opacity-40 text-[var(--muted)]" />
-                    <p className="font-medium text-xs">
-                      {locale === "id"
-                        ? "Tidak ada riwayat ekspor flyer yang cocok."
-                        : "No flyer export records found."}
+        {(() => {
+          const rows = flyerExports.filter((item) => {
+            const q = historySearch.toLowerCase();
+            const matchesSearch = item.filename.toLowerCase().includes(q) || item.headline.toLowerCase().includes(q);
+            return matchesSearch && (historyModeFilter === "all" || item.mode === historyModeFilter);
+          });
+          if (rows.length === 0) {
+            return (
+              <p className="py-6 text-center text-sm text-[var(--muted)]">
+                <FileImage className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                Belum ada flyer yang diunduh.
+              </p>
+            );
+          }
+          return (
+            <ul className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
+              {rows.map((item) => (
+                <li key={item.id} className="py-3 flex items-center justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{item.headline}</p>
+                    <p className="text-[var(--muted)] truncate">
+                      {item.dimensions} · {item.mode === "branded" ? "dengan kontak" : "tanpa kontak"} ·{" "}
+                      {new Date(item.exportedAt).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </p>
-                    <p className="text-[11px] text-[var(--muted)] mt-1">
-                      {locale === "id"
-                        ? "Unduh flyer resolusi tinggi di atas untuk mencatat riwayat baru."
-                        : "Export a high-res flyer above to generate your first audit record."}
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                flyerExports
-                  .filter((item) => {
-                    const matchesSearch =
-                      item.filename.toLowerCase().includes(historySearch.toLowerCase()) ||
-                      item.headline.toLowerCase().includes(historySearch.toLowerCase());
-                    const matchesMode =
-                      historyModeFilter === "all" || item.mode === historyModeFilter;
-                    return matchesSearch && matchesMode;
-                  })
-                  .map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-[var(--bg)]/50 transition-colors"
-                    >
-                      {/* Filename & Headline */}
-                      <td className="py-2.5 px-3 max-w-[320px]">
-                        <div className="flex items-start gap-2.5">
-                          <FileImage className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className="font-mono font-semibold text-[var(--text)] text-xs truncate max-w-[220px]"
-                                title={item.filename}
-                              >
-                                {item.filename}
-                              </span>
-                              <span className="text-[10px] text-[var(--muted)] font-mono font-normal shrink-0">
-                                ({item.fileSizeApprox})
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-[var(--muted)] mt-0.5 truncate">
-                              <span>{item.headline}</span> · <span className="capitalize">{item.template}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Format & Dimensions */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="font-semibold text-[var(--text)] capitalize">
-                          {item.size === "square"
-                            ? "Square (1:1)"
-                            : item.size === "portrait"
-                            ? "Portrait (4:5)"
-                            : item.size === "story"
-                            ? "Story (9:16)"
-                            : item.size === "a4"
-                            ? "A4 Cetak"
-                            : "Landscape"}
-                        </div>
-                        <div className="text-[11px] font-mono tabular-nums text-[var(--muted)]">
-                          {item.dimensions} ·{" "}
-                          <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-                            300 DPI
-                          </strong>
-                        </div>
-                      </td>
-
-                      {/* Branding Mode */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        {item.mode === "branded" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            <Eye className="w-3 h-3" />
-                            <span>Branded (Agency + QR)</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                            <EyeOff className="w-3 h-3" />
-                            <span>Clean (Co-Broke)</span>
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Timestamp */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-[var(--text)] font-mono tabular-nums text-xs">
-                          <Clock className="w-3.5 h-3.5 text-[var(--muted)] shrink-0" />
-                          <span>
-                            {new Date(item.exportedAt).toLocaleDateString(
-                              locale === "id" ? "id-ID" : "en-US",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              }
-                            )}
-                            ,{" "}
-                            {new Date(item.exportedAt).toLocaleTimeString(
-                              locale === "id" ? "id-ID" : "en-US",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-[var(--muted)] pl-5 font-mono">
-                          {new Date(item.exportedAt)
-                            .toISOString()
-                            .replace("T", " ")
-                            .substring(0, 19)}{" "}
-                          UTC
-                        </div>
-                      </td>
-
-                      {/* Verification Status */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="space-y-1">
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Terverifikasi (300 DPI)</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-[10px] font-mono text-[var(--muted)]">
-                            <span title={item.verificationHash}>
-                              {item.verificationHash}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleCopyHash(item.verificationHash, item.id)
-                              }
-                              className="p-0.5 hover:text-[var(--text)] transition-colors cursor-pointer"
-                              title="Salin Hash"
-                            >
-                              {copiedHashId === item.id ? (
-                                <Check className="w-3 h-3 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedRecordForVerification(item)}
-                            className="px-2.5 py-1 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] text-[var(--text)] font-semibold text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Lihat Detail Sertifikasi & Integritas"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent)]" />
-                            <span>Verifikasi</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteFlyerExport(item.id)}
-                            className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-500 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Hapus entri"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Verification Details Modal Dialog */}
-      {selectedRecordForVerification && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-        >
-          <div className="w-full max-w-lg bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-[var(--text)]">
-                    {locale === "id"
-                      ? "Sertifikat Integritas Berkas"
-                      : "File Integrity Certificate"}
-                  </h3>
-                  <p className="text-xs text-[var(--muted)] font-mono">
-                    {selectedRecordForVerification.filename}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedRecordForVerification(null)}
-                className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--muted)] hover:text-[var(--text)] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Verification checklist cards */}
-            <div className="space-y-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between">
-                <span className="text-[var(--muted)]">Status Integritas</span>
-                <span className="font-bold text-emerald-600 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" />
-                  PASSED (100% Valid & Terverifikasi)
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between">
-                <span className="text-[var(--muted)]">Resolusi Kanvas & DPI</span>
-                <span className="font-mono font-bold text-[var(--text)]">
-                  {selectedRecordForVerification.dimensions} · 300 DPI Cetak
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between">
-                <span className="text-[var(--muted)]">Mode Branding</span>
-                <span className="font-semibold text-[var(--text)]">
-                  {selectedRecordForVerification.mode === "branded"
-                    ? "Branded (Header Agensi + Lisensi + QR WhatsApp)"
-                    : "Clean Co-Broke (Spesifikasi Arsitektural Tanpa Kontak)"}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-between">
-                <span className="text-[var(--muted)]">Stempel Waktu Ekspor</span>
-                <span className="font-mono text-[var(--text)] tabular-nums">
-                  {new Date(selectedRecordForVerification.exportedAt).toLocaleString(
-                    locale === "id" ? "id-ID" : "en-US"
-                  )}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--muted)]">
-                    Cryptographic Checksum (SHA-256)
-                  </span>
+                  </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      handleCopyHash(
-                        selectedRecordForVerification.verificationHash,
-                        selectedRecordForVerification.id
-                      )
-                    }
-                    className="text-[11px] font-semibold text-[var(--accent)] flex items-center gap-1 cursor-pointer"
+                    onClick={() => deleteFlyerExport(item.id)}
+                    className="p-2 rounded-lg text-[var(--muted)] hover:text-red-600 shrink-0"
+                    aria-label="Hapus dari riwayat"
                   >
-                    {copiedHashId === selectedRecordForVerification.id ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-600" />
-                        <span>Tersalin</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Salin Hash</span>
-                      </>
-                    )}
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                </div>
-                <div className="p-2 rounded-lg bg-[var(--surface)] font-mono text-[11px] text-[var(--muted)] break-all border border-[var(--border)]">
-                  {selectedRecordForVerification.verificationHash}
-                </div>
-              </div>
-            </div>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
+      </section>
 
-            <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedRecordForVerification(null)}
-                className="px-4 py-2 bg-[var(--accent)] text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
-              >
-                Tutup Pratinjau Verifikasi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Save Layout Preset Modal */}
       <SavePresetModal

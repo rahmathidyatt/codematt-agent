@@ -12,7 +12,7 @@ import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
 
 export default function BrandKitPage() {
-  const { agent, updateAgent, locale } = useAgentStore();
+  const { agent, updateAgent } = useAgentStore();
   const [form, setForm] = useState(agent);
   const [saved, setSaved] = useState(false);
 
@@ -24,8 +24,8 @@ export default function BrandKitPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Brand Kit Agensi" : "Agency Brand Kit"}
-      subtitle={locale === "id" ? "Kustomisasi identitas logo, warna, dan kontak agen" : "Configure agency branding, color palette, and business profile"}
+      title="Identitas Brand"
+      subtitle="Logo, warna, dan kontak yang muncul di flyer"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Brand Kit Editor Form */}
@@ -33,19 +33,19 @@ export default function BrandKitPage() {
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
               <h2 className="text-base font-bold text-[var(--text)] flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
-                <span>{locale === "id" ? "Profil & Identitas Kantor" : "Agency & Profile Setup"}</span>
+                <ShieldCheck className="w-4 h-4 text-[var(--accent-text)]" />
+                <span>Profil</span>
               </h2>
-              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+              <span className="text-[13px] text-emerald-600 font-semibold flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" /> Terverifikasi
               </span>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-[13px]">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nama Lengkap Agen" : "Agent Full Name"}
+                    Nama lengkap
                   </label>
                   <input
                     type="text"
@@ -56,7 +56,7 @@ export default function BrandKitPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Gelar / Jabatan" : "Title / Designation"}
+                    Jabatan
                   </label>
                   <input
                     type="text"
@@ -70,7 +70,7 @@ export default function BrandKitPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nama Agensi / Kantor" : "Agency Office"}
+                    Kantor
                   </label>
                   <input
                     type="text"
@@ -81,7 +81,7 @@ export default function BrandKitPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nomor Lisensi (AREBI / NRP)" : "License Number"}
+                    Nomor lisensi
                   </label>
                   <input
                     type="text"
@@ -95,7 +95,7 @@ export default function BrandKitPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nomor WhatsApp" : "WhatsApp Number"}
+                    Nomor WhatsApp
                   </label>
                   <input
                     type="text"
@@ -106,7 +106,7 @@ export default function BrandKitPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Alamat Email" : "Email Address"}
+                    Email
                   </label>
                   <input
                     type="email"
@@ -120,7 +120,7 @@ export default function BrandKitPage() {
               {/* Color Palette Picker */}
               <div className="pt-2 border-t border-[var(--border)] space-y-3">
                 <label className="font-semibold text-[var(--text)] block">
-                  {locale === "id" ? "Warna Utama Brand Agensi:" : "Primary Brand Color:"}
+                  Warna utama
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -133,7 +133,7 @@ export default function BrandKitPage() {
                     type="text"
                     value={form.primaryColor}
                     onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                    className="w-32 px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl font-mono text-xs uppercase"
+                    className="w-32 px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl font-mono text-[13px] uppercase"
                   />
                   <div className="flex items-center gap-1.5">
                     {["#186759", "#1e3a8a", "#b45309", "#7c2d12", "#0f172a"].map((c) => (
@@ -151,7 +151,7 @@ export default function BrandKitPage() {
 
               <div>
                 <label className="font-semibold text-[var(--text)] block mb-1">
-                  {locale === "id" ? "Default Pesan CTA" : "Default CTA Text"}
+                  Ajakan di flyer
                 </label>
                 <textarea
                   rows={2}
@@ -164,10 +164,10 @@ export default function BrandKitPage() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 shadow-xs transition-opacity"
+                className="w-full py-3 bg-[var(--accent)] text-neutral-950 text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 shadow-xs transition-opacity"
               >
                 {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                <span>{saved ? "Perubahan Disimpan!" : "Simpan Brand Kit"}</span>
+                <span>{saved ? "Tersimpan" : "Simpan"}</span>
               </button>
             </div>
           </div>
@@ -176,11 +176,10 @@ export default function BrandKitPage() {
         {/* Right Column: Live Business Card & Badge Preview */}
         <div className="lg:col-span-6 space-y-6">
           <div className="p-6 md:p-8 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] text-xs text-[var(--muted)]">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] text-[13px] text-[var(--muted)]">
               <span className="font-bold text-[var(--text)] uppercase tracking-wider">
-                Kartu Bisnis Digital Live
+                Pratinjau kartu nama
               </span>
-              <span>Stempel Otomatis Flyer</span>
             </div>
 
             {/* Visual Digital Business Card */}
@@ -190,18 +189,18 @@ export default function BrandKitPage() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-mono tracking-wider uppercase opacity-80">
+                  <span className="text-[13px] font-mono tracking-wider uppercase opacity-80">
                     {form.agency}
                   </span>
                   <h3 className="text-xl font-bold mt-1 tracking-tight">{form.name}</h3>
-                  <p className="text-xs opacity-90 mt-0.5">{form.title}</p>
+                  <p className="text-[13px] opacity-90 mt-0.5">{form.title}</p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-bold text-lg border border-white/20">
                   {form.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                 </div>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-white/20 flex flex-wrap justify-between items-end gap-2 text-xs">
+              <div className="mt-8 pt-4 border-t border-white/20 flex flex-wrap justify-between items-end gap-2 text-[13px]">
                 <div className="space-y-1 opacity-90">
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5" />
@@ -214,16 +213,14 @@ export default function BrandKitPage() {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] uppercase tracking-wider block opacity-75">Lisensi AREBI</span>
-                  <span className="font-mono font-bold text-xs">{form.license}</span>
+                  <span className="text-xs uppercase tracking-wider block opacity-75">Lisensi AREBI</span>
+                  <span className="font-mono font-bold text-[13px]">{form.license}</span>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-[var(--muted)] leading-relaxed">
-              {locale === "id"
-                ? "Identitas Brand Kit ini secara otomatis disematkan pada seluruh output Flyer 300 DPI, brosur PDF, dan copywriting listing tanpa perlu mengetik ulang profil kantor."
-                : "This Brand Kit identity is automatically stamped onto all 300 DPI flyers, PDF brochures, and listing descriptions without repetitive manual typing."}
+            <p className="text-[13px] text-[var(--muted)] leading-relaxed">
+              Data ini otomatis dipakai di flyer dan deskripsi listing.
             </p>
           </div>
         </div>

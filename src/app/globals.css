@@ -12,6 +12,7 @@
   --accent-hover: #e5ac00;
   --accent-soft: #fef9c3;
   --accent-contrast: #111113;
+  --accent-text: #8a6100;
   --border: #e4e4e7;
 }
 
@@ -26,6 +27,7 @@
   --accent-hover: #eab308;
   --accent-soft: rgba(250, 204, 21, 0.14);
   --accent-contrast: #111113;
+  --accent-text: #facc15;
   --border: #27272a;
 }
 

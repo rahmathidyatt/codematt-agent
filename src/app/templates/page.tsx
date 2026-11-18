@@ -10,10 +10,11 @@ import {
   FileText,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
+import { SectionTabs, ARCHIVE_TABS } from "@/components/layout/SectionTabs";
 import { useAgentStore } from "@/lib/store";
 
 export default function TemplatesPage() {
-  const { listings, deleteListing, addListing, locale } = useAgentStore();
+  const { listings, deleteListing, addListing } = useAgentStore();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
 
@@ -35,9 +36,10 @@ export default function TemplatesPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Arsip Proyek & Template" : "Saved Projects & Templates"}
-      subtitle={locale === "id" ? "Repositori terpusat untuk listing tersimpan, draf flyer, dan preset agensi" : "Central repository for saved listings, flyer drafts, and agency presets"}
+      title="Arsip & Panduan"
+      subtitle="Listing tersimpan, draf flyer, dan panduan properti"
     >
+      <SectionTabs tabs={ARCHIVE_TABS} />
       <div className="space-y-6">
         {/* Search & Filter Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -47,8 +49,8 @@ export default function TemplatesPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari berdasarkan nama properti, lokasi, atau sertifikat..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+              placeholder="Cari nama properti atau lokasi"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             />
           </div>
 
@@ -58,9 +60,9 @@ export default function TemplatesPage() {
                 key={t}
                 type="button"
                 onClick={() => setFilterType(t)}
-                className={`px-3 py-2 text-xs rounded-xl font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-2 text-[13px] rounded-xl font-medium whitespace-nowrap transition-colors ${
                   filterType === t
-                    ? "bg-[var(--accent)] text-white shadow-xs"
+                    ? "bg-[var(--accent)] text-neutral-950 shadow-xs"
                     : "bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)]"
                 }`}
               >
@@ -79,10 +81,10 @@ export default function TemplatesPage() {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-[var(--accent)] uppercase">
+                  <span className="text-[13px] font-bold text-[var(--accent-text)] uppercase">
                     {l.transactionType} · {l.type}
                   </span>
-                  <span className="text-[11px] font-mono text-[var(--muted)]">
+                  <span className="text-[13px] font-mono text-[var(--muted)]">
                     {new Date(l.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -91,8 +93,8 @@ export default function TemplatesPage() {
                   {l.name}
                 </h3>
 
-                <p className="text-xs text-[var(--muted)] line-clamp-2">
-                  📍 {l.location} · {l.bedrooms} KT / {l.bathrooms} KM · LT {l.landSize}m²
+                <p className="text-[13px] text-[var(--muted)] line-clamp-2">
+                  {l.location} · {l.bedrooms} KT · {l.bathrooms} KM · LT {l.landSize}m²
                 </p>
 
                 <div className="text-sm font-bold font-mono text-[var(--text)] pt-1">
@@ -100,27 +102,27 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between text-xs">
+              <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between text-[13px]">
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/listing?id=${l.id}`}
-                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent)]"
-                    title="Buka Listing Writer"
+                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent-text)]"
+                    title="Tulis deskripsi"
                   >
                     <FileText className="w-3.5 h-3.5" />
                   </Link>
                   <Link
                     href={`/flyer?listingId=${l.id}`}
-                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent)]"
-                    title="Buka Flyer Studio"
+                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent-text)]"
+                    title="Buat flyer"
                   >
                     <Palette className="w-3.5 h-3.5" />
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleDuplicate(l)}
-                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent)]"
-                    title="Duplikasi Proyek"
+                    className="p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:text-[var(--accent-text)]"
+                    title="Duplikat"
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -130,7 +132,7 @@ export default function TemplatesPage() {
                   type="button"
                   onClick={() => deleteListing(l.id)}
                   className="text-rose-600 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20"
-                  title="Hapus Proyek"
+                  title="Hapus"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

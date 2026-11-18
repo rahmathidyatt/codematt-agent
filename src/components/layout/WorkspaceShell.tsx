@@ -13,19 +13,16 @@ import {
   Layers,
   BarChart3,
   Users,
-  BookOpen,
   Settings,
   Menu,
   X,
-  Globe,
   Sun,
   Moon,
   Laptop,
-  ExternalLink,
-  Milestone,
   ShieldCheck,
-  ChevronRight,
   Wand2,
+  Crop,
+  type LucideIcon,
 } from "lucide-react";
 import { useAgentStore } from "@/lib/store";
 import { PLANS } from "@/config/plans";
@@ -37,21 +34,93 @@ interface WorkspaceShellProps {
   subtitle?: string;
 }
 
-const MODULE_NAV = [
-  { href: "/dashboard", labelId: "Dasbor", labelEn: "Dashboard", icon: LayoutDashboard },
-  { href: "/photo-editor", labelId: "Edit Foto Properti", labelEn: "Property Photo Editor", icon: Wand2, badge: "AI" },
-  { href: "/flyer", labelId: "Flyer Studio", labelEn: "Flyer Studio", icon: Palette, badge: "300 DPI" },
-  { href: "/listing", labelId: "Listing Writer", labelEn: "Listing Writer", icon: FileText, badge: "AI" },
-  { href: "/followup", labelId: "Follow-up WhatsApp", labelEn: "WhatsApp Follow-up", icon: MessageSquare },
-  { href: "/content", labelId: "Content Studio", labelEn: "Content Studio", icon: Sparkles },
-  { href: "/assistant", labelId: "AI Assistant", labelEn: "AI Assistant", icon: Bot },
-  { href: "/brand", labelId: "Brand Kit", labelEn: "Brand Kit", icon: ShieldCheck },
-  { href: "/templates", labelId: "Arsip & Template", labelEn: "Saved & Templates", icon: Layers },
-  { href: "/pricing", labelId: "Langganan & Kuota", labelEn: "Plans & Usage", icon: BarChart3 },
-  { href: "/leads", labelId: "Kontak Prospek", labelEn: "Leads CRM", icon: Users },
-  { href: "/knowledge", labelId: "Basis Pengetahuan", labelEn: "Knowledge Base", icon: BookOpen },
-  { href: "/settings", labelId: "Pengaturan", labelEn: "Settings", icon: Settings },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Extra paths that highlight this item (merged sections). */
+  also?: string[];
+}
+
+const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
+  { label: null, items: [{ href: "/dashboard", label: "Dasbor", icon: LayoutDashboard }] },
+  {
+    label: "Foto & Flyer",
+    items: [
+      { href: "/photo-editor", label: "Edit Foto", icon: Wand2 },
+      { href: "/photo-tools", label: "Ukuran & HD", icon: Crop },
+      { href: "/flyer", label: "Pembuat Flyer", icon: Palette },
+      { href: "/brand", label: "Identitas Brand", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Tulis dengan AI",
+    items: [
+      { href: "/assistant", label: "Asisten AI", icon: Bot },
+      { href: "/listing", label: "Penulis Listing", icon: FileText },
+      { href: "/followup", label: "Follow-up WhatsApp", icon: MessageSquare },
+      { href: "/content", label: "Konten Media Sosial", icon: Sparkles },
+    ],
+  },
+  {
+    label: "Prospek & Akun",
+    items: [
+      { href: "/leads", label: "Kontak Prospek", icon: Users },
+      { href: "/templates", label: "Arsip & Panduan", icon: Layers, also: ["/knowledge"] },
+      { href: "/pricing", label: "Langganan", icon: BarChart3 },
+      { href: "/settings", label: "Pengaturan", icon: Settings },
+    ],
+  },
 ];
+
+const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+
+function isActiveItem(item: NavItem, pathname: string | null) {
+  return pathname === item.href || Boolean(pathname && item.also?.includes(pathname));
+}
+
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-2 font-black tracking-tight text-[var(--text)]" aria-label="Codematt Agent, beranda">
+      <span className="w-8 h-8 rounded-lg bg-[var(--accent)] text-neutral-950 flex items-center justify-center text-sm">C</span>
+      Codematt Agent
+    </Link>
+  );
+}
+
+function NavList({ pathname, onNavigate }: { pathname: string | null; onNavigate?: () => void }) {
+  return (
+    <nav className="flex-1 p-3 space-y-5" aria-label="Menu utama">
+      {NAV_GROUPS.map((group, gi) => (
+        <div key={group.label ?? gi} className="space-y-1">
+          {group.label && (
+            <div className="px-3 pb-1 text-[13px] font-semibold text-[var(--muted)]">{group.label}</div>
+          )}
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            const active = isActiveItem(item, pathname);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${
+                  active
+                    ? "bg-[var(--accent)] text-neutral-950 font-bold"
+                    : "text-[var(--text)] hover:bg-[var(--bg)]"
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${active ? "text-neutral-950" : "text-[var(--muted)]"}`} />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
+}
 
 export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProps) {
   const pathname = usePathname();
@@ -61,290 +130,113 @@ export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProp
   const chatLimit = billing.limits?.chat ?? PLANS[billing.planId].quotas.chat;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Handle ESC key for mobile drawer
+  // The workspace is Indonesian-only for now; reset older saved "en" choices.
+  useEffect(() => {
+    if (locale !== "id") setLocale("id");
+  }, [locale, setLocale]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMobileMenuOpen(false);
-      }
+      if (e.key === "Escape") setMobileMenuOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const currentModule = MODULE_NAV.find((m) => m.href === pathname) || {
-    labelId: title || "Workspace",
-    labelEn: title || "Workspace",
-  };
+  const current = ALL_ITEMS.find((m) => isActiveItem(m, pathname));
+  const quota = (
+    <Link href="/pricing" className="block p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm space-y-1.5 hover:border-[var(--accent)]">
+      <div className="flex items-center justify-between text-[var(--muted)] text-[13px]">
+        <span>{billing.mode === "live" ? `Paket ${PLANS[billing.planId].name}` : "Mode demo"}</span>
+        {billing.mode === "live" && (
+          <span className="tabular-nums font-bold text-[var(--text)]">{chatUsed}/{chatLimit} pesan</span>
+        )}
+      </div>
+      <div className="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden">
+        <div
+          className="bg-[var(--accent)] h-full rounded-full"
+          style={{ width: `${billing.mode === "live" && chatLimit > 0 ? Math.min(100, (chatUsed / chatLimit) * 100) : 0}%` }}
+        />
+      </div>
+    </Link>
+  );
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex">
-      {/* Desktop Sidebar (Fixed 260px) */}
+      {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 border-r border-[var(--border)] bg-[var(--surface)] shrink-0 h-screen sticky top-0 overflow-y-auto">
-        {/* Brand Lockup */}
-        <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-lg bg-[var(--accent)] text-neutral-950 flex items-center justify-center font-black text-sm shadow-xs">
-              B.
-            </span>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-tight text-[var(--text)] uppercase leading-none">
-                BRIGHTON
-              </span>
-              <span className="text-[10px] font-semibold text-[var(--muted)] tracking-wider uppercase leading-none mt-0.5">
-                Real Estate Agent
-              </span>
-            </div>
-          </Link>
-          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-amber-800 dark:text-amber-300">
-            PRO
-          </span>
+        <div className="p-5 border-b border-[var(--border)]">
+          <Logo />
         </div>
-
-        {/* Agent Profile Capsule */}
-        <div className="p-4 border-b border-[var(--border)] bg-[var(--bg)]/50">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-950 text-xs font-black shrink-0 shadow-xs border border-black/10"
-              style={{ backgroundColor: agent.primaryColor || "#f5b800" }}
-            >
-              {agent.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[var(--text)] truncate">{agent.name}</p>
-              <p className="text-[11px] text-[var(--muted)] truncate">{agent.agency}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Modules */}
-        <nav className="flex-1 p-3 space-y-1">
-          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            {locale === "id" ? "Modul Kerja" : "Agent Modules"}
-          </div>
-          {MODULE_NAV.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-[var(--accent)] text-neutral-950 shadow-xs font-bold"
-                    : "text-[var(--text)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-neutral-950" : "text-[var(--muted)]"}`} />
-                  <span className="truncate">{locale === "id" ? item.labelId : item.labelEn}</span>
-                </div>
-                {item.badge && (
-                  <span
-                    className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${
-                      isActive
-                        ? "bg-black/15 text-neutral-950"
-                        : "bg-[var(--bg)] text-amber-800 dark:text-amber-300 border border-[var(--border)]"
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Quota & Roadmap Link */}
-        <div className="p-3 border-t border-[var(--border)] space-y-2">
-          <Link
-            href="/roadmap"
-            className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)] hover:border-[var(--accent)] transition-colors"
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-950 text-[13px] font-black shrink-0 border border-black/10"
+            style={{ backgroundColor: agent.primaryColor || "#f5b800" }}
           >
-            <div className="flex items-center gap-2">
-              <Milestone className="w-3.5 h-3.5 text-[var(--accent)]" />
-              <span className="font-semibold">{locale === "id" ? "Peta Jalan" : "Roadmap"}</span>
-            </div>
-            <span className="text-[10px] text-[var(--muted)] font-bold">Status fitur</span>
-          </Link>
-
-          <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
-              <span>
-                {billing.mode === "live"
-                  ? `${PLANS[billing.planId].name} · ${locale === "id" ? "pesan AI" : "AI messages"}`
-                  : locale === "id" ? "Mode demo" : "Demo mode"}
-              </span>
-              <span className="tabular-nums font-mono font-bold text-[var(--text)]">
-                {billing.mode === "live" ? `${chatUsed} / ${chatLimit}` : "–"}
-              </span>
-            </div>
-            <div className="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-[var(--accent)] h-full rounded-full"
-                style={{ width: `${billing.mode === "live" && chatLimit > 0 ? Math.min(100, (chatUsed / chatLimit) * 100) : 0}%` }}
-              />
-            </div>
+            {agent.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold truncate">{agent.name}</p>
+            <p className="text-[13px] text-[var(--muted)] truncate">{agent.agency}</p>
           </div>
         </div>
+        <NavList pathname={pathname} />
+        <div className="p-3 border-t border-[var(--border)]">{quota}</div>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top App Bar */}
         <header className="h-16 border-b border-[var(--border)] bg-[var(--surface)] px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-2 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)]"
-              aria-label="Open mobile menu"
+              aria-label="Buka menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-1.5 text-xs text-[var(--muted)] truncate">
-              <Link href="/dashboard" className="hover:text-[var(--text)] transition-colors">
-                Workspace
-              </Link>
-              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-semibold text-[var(--text)] truncate">
-                {locale === "id" ? currentModule.labelId : currentModule.labelEn}
-              </span>
-              {subtitle && (
-                <>
-                  <span aria-hidden="true" className="text-[var(--border)]">|</span>
-                  <span className="hidden md:inline text-[var(--muted)] truncate">{subtitle}</span>
-                </>
-              )}
+            <div className="min-w-0">
+              <h1 className="text-base font-bold truncate">{title || current?.label || "Workspace"}</h1>
+              {subtitle && <p className="hidden md:block text-[13px] text-[var(--muted)] truncate">{subtitle}</p>}
             </div>
           </div>
 
-          {/* Right Action Icons: Locale, Theme, Public Landing */}
-          <div className="flex items-center gap-2">
-            {/* Locale Toggle */}
-            <button
-              type="button"
-              onClick={() => setLocale(locale === "id" ? "en" : "id")}
-              className="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-xs font-semibold text-[var(--text)] flex items-center gap-1.5 hover:bg-[var(--surface)] transition-colors"
-              title="Toggle Language"
-            >
-              <Globe className="w-3.5 h-3.5 text-[var(--accent)]" />
-              <span className="uppercase">{locale}</span>
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={() => {
-                if (theme === "light") setTheme("dark");
-                else if (theme === "dark") setTheme("system");
-                else setTheme("light");
-              }}
-              className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-              title={`Current Theme: ${theme}`}
-              aria-label="Toggle Theme"
-            >
-              {theme === "light" ? (
-                <Sun className="w-4 h-4 text-amber-500" />
-              ) : theme === "dark" ? (
-                <Moon className="w-4 h-4 text-indigo-400" />
-              ) : (
-                <Laptop className="w-4 h-4 text-[var(--muted)]" />
-              )}
-            </button>
-
-            {/* Return to Public Landing Page */}
-            <Link
-              href="/"
-              className="hidden sm:flex items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--text)] px-3 py-1.5 rounded-lg border border-transparent hover:border-[var(--border)] transition-colors"
-            >
-              <span>Landing</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (theme === "light") setTheme("dark");
+              else if (theme === "dark") setTheme("system");
+              else setTheme("light");
+            }}
+            className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:text-[var(--text)]"
+            title={theme === "light" ? "Tema terang" : theme === "dark" ? "Tema gelap" : "Ikuti sistem"}
+            aria-label="Ganti tema"
+          >
+            {theme === "light" ? <Sun className="w-4 h-4" /> : theme === "dark" ? <Moon className="w-4 h-4" /> : <Laptop className="w-4 h-4" />}
+          </button>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
 
-      {/* Mobile Drawer (with backdrop and focus management) */}
+      {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-
-          <div className="relative w-72 max-w-[85vw] bg-[var(--surface)] h-full flex flex-col z-10 shadow-xl border-r border-[var(--border)] animate-in slide-in-from-left duration-200">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
+          <div className="relative w-72 max-w-[85vw] bg-[var(--surface)] h-full flex flex-col z-10 shadow-xl border-r border-[var(--border)] overflow-y-auto">
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-[var(--accent)] text-neutral-950 flex items-center justify-center font-black text-xs shadow-xs">
-                  B.
-                </span>
-                <span className="font-extrabold text-sm uppercase tracking-tight text-[var(--text)]">
-                  BRIGHTON <span className="text-[var(--accent)]">AGENT</span>
-                </span>
-              </div>
+              <Logo />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)]"
-                aria-label="Close menu"
+                aria-label="Tutup menu"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-              {MODULE_NAV.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium ${
-                      isActive
-                        ? "bg-[var(--accent)] text-neutral-950 font-bold shadow-xs"
-                        : "text-[var(--text)] hover:bg-[var(--bg)]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className={`w-4 h-4 ${isActive ? "text-neutral-950" : "text-[var(--muted)]"}`} />
-                      <span>{locale === "id" ? item.labelId : item.labelEn}</span>
-                    </div>
-                    {item.badge && (
-                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                        isActive ? "bg-black/15 text-neutral-950" : "bg-[var(--bg)] text-amber-800 dark:text-amber-300 border border-[var(--border)]"
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="p-4 border-t border-[var(--border)] space-y-2">
-              <Link
-                href="/roadmap"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg)] text-xs text-[var(--text)] font-semibold"
-              >
-                <span className="flex items-center gap-1.5">
-                  <Milestone className="w-3.5 h-3.5 text-[var(--accent)]" />
-                  Roadmap
-                </span>
-                <span className="text-[var(--muted)] text-[11px]">Status fitur</span>
-              </Link>
-            </div>
+            <NavList pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
+            <div className="p-3 border-t border-[var(--border)]">{quota}</div>
           </div>
         </div>
       )}

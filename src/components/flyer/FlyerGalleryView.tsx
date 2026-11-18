@@ -60,15 +60,15 @@ export function FlyerGalleryView({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <Bookmark className="w-5 h-5 text-[var(--accent)]" />
+              <Bookmark className="w-5 h-5 text-[var(--accent-text)]" />
               <h2 className="text-base font-bold text-[var(--text)]">
                 {locale === "id" ? "Galeri Layout & Preset Flyer" : "Flyer Layout & Preset Gallery"}
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[var(--accent)]/10 text-[var(--accent)]">
+              <span className="px-2.5 py-0.5 rounded-full text-[13px] font-mono font-bold bg-[var(--accent)]/10 text-[var(--accent-text)]">
                 {presets.length} {locale === "id" ? "Preset" : "Presets"}
               </span>
             </div>
-            <p className="text-xs text-[var(--muted)]">
+            <p className="text-[13px] text-[var(--muted)]">
               {locale === "id"
                 ? "Pilih dari koleksi layout siap pakai atau panggil kembali preset kustom yang telah Anda simpan."
                 : "Browse curated flyer designs or instantly recall your custom saved layouts."}
@@ -80,7 +80,7 @@ export function FlyerGalleryView({
             <button
               type="button"
               onClick={onResetDefaults}
-              className="px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-xs text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[13px] text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1.5 transition-colors cursor-pointer"
               title={locale === "id" ? "Pulihkan preset bawaan" : "Reset default presets"}
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ export function FlyerGalleryView({
               type="button"
               onClick={onOpenSaveModal}
               data-testid="save-preset-button"
-              className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>{locale === "id" ? "Simpan Layout Saat Ini" : "Save Current Layout"}</span>
@@ -107,19 +107,19 @@ export function FlyerGalleryView({
               placeholder={locale === "id" ? "Cari preset, judul, kota..." : "Search presets by name or topic..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] focus:border-[var(--accent)]"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)] focus:border-[var(--accent)]"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-[13px]">
             {categories.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setSelectedCategory(c.id)}
-                className={`px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl border text-[13px] whitespace-nowrap transition-all cursor-pointer ${
                   selectedCategory === c.id
-                    ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold shadow-xs"
+                    ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] font-semibold shadow-xs"
                     : "bg-[var(--bg)] text-[var(--muted)] border-[var(--border)] hover:text-[var(--text)] hover:border-[var(--muted)]"
                 }`}
               >
@@ -137,7 +137,7 @@ export function FlyerGalleryView({
           <h3 className="text-sm font-bold text-[var(--text)]">
             {locale === "id" ? "Tidak ada preset yang sesuai" : "No presets match your search"}
           </h3>
-          <p className="text-xs text-[var(--muted)] max-w-sm mx-auto">
+          <p className="text-[13px] text-[var(--muted)] max-w-sm mx-auto">
             {locale === "id"
               ? "Coba ubah kata kunci pencarian atau ganti filter kategori preset di atas."
               : "Try adjusting your search terms or filter criteria."}
@@ -148,7 +148,7 @@ export function FlyerGalleryView({
               setSearchQuery("");
               setSelectedCategory("all");
             }}
-            className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-semibold hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>{locale === "id" ? "Tampilkan Semua Preset" : "Clear Filters"}</span>
@@ -193,7 +193,7 @@ export function FlyerGalleryView({
                     {/* Mockup Header */}
                     {preset.showBranding ? (
                       <div className="flex items-center justify-between border-b pb-1 mb-1 border-current/15 text-[8px] font-bold">
-                        <span className="truncate max-w-[100px] uppercase tracking-wider text-[var(--accent)]">
+                        <span className="truncate max-w-[100px] uppercase tracking-wider text-[var(--accent-text)]">
                           ERA Codematt
                         </span>
                         <span className="text-[7px] opacity-75 font-mono">AREBI</span>
@@ -218,7 +218,7 @@ export function FlyerGalleryView({
                       }`}
                     >
                       <Building2 className="w-5 h-5 opacity-40" />
-                      <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[6px] font-bold bg-[var(--accent)] text-white">
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[6px] font-bold bg-[var(--accent)] text-neutral-950">
                         {preset.showBranding ? "EKSKLUSIF" : "VERIFIED"}
                       </div>
                     </div>
@@ -227,7 +227,7 @@ export function FlyerGalleryView({
                     <div className="space-y-0.5">
                       <div
                         className={`text-[9px] font-black leading-tight truncate ${
-                          isLuxury ? "text-[#d4af37]" : "text-[var(--accent)]"
+                          isLuxury ? "text-[#d4af37]" : "text-[var(--accent-text)]"
                         }`}
                       >
                         {preset.priceLabel}
@@ -266,7 +266,7 @@ export function FlyerGalleryView({
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div className="space-y-2">
                     {/* Tags row */}
-                    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <span className="font-semibold px-2 py-0.5 rounded-md bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]">
                         {formatAspectDisplay(preset.size)}
                       </span>
@@ -283,11 +283,11 @@ export function FlyerGalleryView({
                         {preset.showBranding ? "Branded" : "Clean Co-Broke"}
                       </span>
                       {preset.isCurated ? (
-                        <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-bold text-[9px]">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-bold text-xs">
                           Bawaan
                         </span>
                       ) : (
-                        <span className="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 font-bold text-[9px]">
+                        <span className="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 font-bold text-xs">
                           Kustom
                         </span>
                       )}
@@ -298,7 +298,7 @@ export function FlyerGalleryView({
                       <h3 className="font-bold text-sm text-[var(--text)] leading-snug">
                         {preset.name}
                       </h3>
-                      <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1 leading-relaxed">
+                      <p className="text-[13px] text-[var(--muted)] line-clamp-2 mt-1 leading-relaxed">
                         {preset.description}
                       </p>
                     </div>
@@ -308,7 +308,7 @@ export function FlyerGalleryView({
                       {preset.highlights.slice(0, 3).map((h, i) => (
                         <span
                           key={i}
-                          className="px-1.5 py-0.5 rounded text-[10px] bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]"
+                          className="px-1.5 py-0.5 rounded text-xs bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]"
                         >
                           {h}
                         </span>
@@ -322,7 +322,7 @@ export function FlyerGalleryView({
                       type="button"
                       onClick={() => onApplyPreset(preset)}
                       data-testid={`apply-preset-${preset.id}`}
-                      className="flex-1 py-2 px-3 rounded-xl bg-[var(--accent)] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      className="flex-1 py-2 px-3 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>{locale === "id" ? "Terapkan ke Kanvas" : "Apply to Canvas"}</span>
