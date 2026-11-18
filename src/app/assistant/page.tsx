@@ -77,17 +77,17 @@ export default function AssistantPage() {
 
   return (
     <WorkspaceShell
-      title="AI Assistant"
+      title="Asisten AI"
       subtitle="Pesan klien, skrip negosiasi, dan penjelasan legalitas"
     >
       <div className="max-w-4xl mx-auto space-y-5">
         {billing.mode === "demo" && !billing.loading && (
-          <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs text-[var(--text)]">
+          <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-[13px] text-[var(--text)]">
             <strong>Mode demo.</strong> AI belum diaktifkan oleh admin, jadi jawaban di bawah hanya contoh dan tidak memotong kuota.
           </div>
         )}
         {billing.mode === "signed-out" && (
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xs">
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[13px]">
             Silakan <Link href="/login" className="underline font-bold">login</Link> untuk memakai AI.
           </div>
         )}
@@ -103,7 +103,7 @@ export default function AssistantPage() {
                 type="button"
                 onClick={() => setProvider(p)}
                 aria-pressed={provider === p}
-                className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                className={`px-3.5 py-2 rounded-xl border text-[13px] font-bold flex items-center gap-1.5 transition-colors ${
                   provider === p
                     ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)]"
                     : "bg-[var(--surface)] border-[var(--border)] text-[var(--text)] hover:border-[var(--muted)]"
@@ -116,22 +116,22 @@ export default function AssistantPage() {
             );
           })}
           {billing.mode === "live" && (
-            <span className="ml-auto text-[11px] font-mono text-[var(--muted)]">
+            <span className="ml-auto text-[13px] font-mono text-[var(--muted)]">
               Paket {PLANS[billing.planId].name} · {chatUsed}/{chatLimit} pesan bulan ini
             </span>
           )}
         </div>
 
         {isLocked(provider) && (
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xs flex items-center justify-between gap-3">
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[13px] flex items-center justify-between gap-3">
             <span>{PROVIDER_LABELS[provider]} tersedia mulai paket {cheapestPlanFor(provider)?.name}.</span>
             <Link href="/pricing" className="px-3 py-1.5 rounded-lg bg-[var(--accent)] text-neutral-950 font-bold">Upgrade</Link>
           </div>
         )}
 
         <div className="space-y-2">
-          <span className="text-xs font-semibold text-[var(--muted)] flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" /> Contoh pertanyaan
+          <span className="text-[13px] font-semibold text-[var(--muted)] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent-text)]" /> Contoh pertanyaan
           </span>
           <div className="flex flex-wrap gap-2">
             {QUICK_PROMPTS.map((q) => (
@@ -140,7 +140,7 @@ export default function AssistantPage() {
                 type="button"
                 onClick={() => send(q)}
                 disabled={loading || isLocked(provider)}
-                className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] text-[var(--text)] text-left disabled:opacity-50"
+                className="text-[13px] px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] text-[var(--text)] text-left disabled:opacity-50"
               >
                 {q}
               </button>
@@ -151,12 +151,12 @@ export default function AssistantPage() {
         <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] min-h-[440px] flex flex-col justify-between gap-4">
           <div className="space-y-4 overflow-y-auto max-h-[520px] pr-1" aria-live="polite">
             {messages.length === 0 && (
-              <p className="text-xs text-[var(--muted)]">
+              <p className="text-[13px] text-[var(--muted)]">
                 Halo {agent.name.split(" ")[0]}, ada yang bisa dibantu?
               </p>
             )}
             {messages.map((m) => (
-              <div key={m.id} className={`flex gap-3 text-xs ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex gap-3 text-[13px] ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "assistant" && (
                   <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-neutral-950 flex items-center justify-center shrink-0">
                     <Bot className="w-4 h-4" />
@@ -171,7 +171,7 @@ export default function AssistantPage() {
                 }`}>
                   <p>{m.text}</p>
                   {m.role === "assistant" && m.provider && !m.failed && (
-                    <div className="mt-1.5 text-[10px] font-mono text-[var(--muted)]">
+                    <div className="mt-1.5 text-xs font-mono text-[var(--muted)]">
                       {PROVIDER_LABELS[m.provider]}{m.model === "demo" ? " · contoh" : ""}
                     </div>
                   )}
@@ -179,8 +179,8 @@ export default function AssistantPage() {
               </div>
             ))}
             {loading && (
-              <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--accent)]" />
+              <div className="flex items-center gap-2 text-[13px] text-[var(--muted)]">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--accent-text)]" />
                 <span>{PROVIDER_LABELS[provider]} sedang menjawab...</span>
               </div>
             )}
@@ -196,19 +196,19 @@ export default function AssistantPage() {
               maxLength={4000}
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Tanya ${PROVIDER_LABELS[provider]}...`}
-              className="flex-1 px-4 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+              className="flex-1 px-4 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             />
             <button
               type="submit"
               disabled={loading || !input.trim() || isLocked(provider)}
-              className="px-5 py-3 bg-[var(--accent)] text-neutral-950 rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-3 bg-[var(--accent)] text-neutral-950 rounded-xl text-[13px] font-bold flex items-center gap-1.5 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               <span className="hidden sm:inline">Kirim</span>
             </button>
           </form>
         </div>
-        <p className="text-[11px] text-[var(--muted)]">
+        <p className="text-[13px] text-[var(--muted)]">
           Jawaban AI bisa keliru. Cek ulang data harga, legalitas, dan perhitungan KPR sebelum dikirim ke klien.
         </p>
       </div>

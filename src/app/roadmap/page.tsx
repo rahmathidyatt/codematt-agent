@@ -33,12 +33,12 @@ export default function RoadmapPage() {
         {ITEMS.map((item) => {
           const info = META[item.status];
           return (
-            <div key={item.title} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex gap-3 text-xs">
+            <div key={item.title} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex gap-3 text-[13px]">
               <info.Icon className={`w-4 h-4 mt-0.5 shrink-0 ${info.className}`} />
               <div className="flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-[var(--text)]">{item.title}</span>
-                  <span className={`font-mono text-[10px] ${info.className}`}>{info.label}</span>
+                  <span className={`font-mono text-xs ${info.className}`}>{info.label}</span>
                 </div>
                 <p className="text-[var(--muted)] mt-0.5">{item.note}</p>
               </div>

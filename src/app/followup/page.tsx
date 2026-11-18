@@ -118,8 +118,8 @@ export default function FollowupPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "WhatsApp Client Follow-up" : "WhatsApp Client Follow-up"}
-      subtitle={locale === "id" ? "Template pesan tindak lanjut berbasis skenario closing" : "Scenario-based client follow-up sequence builder"}
+      title="Follow-up WhatsApp"
+      subtitle="Pesan lanjutan untuk klien sesuai tahap closing"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Scenario & Client Configuration */}
@@ -128,15 +128,14 @@ export default function FollowupPage() {
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
               <h2 className="text-base font-bold text-[var(--text)] flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
-                <span>{locale === "id" ? "Konfigurasi Follow-up" : "Follow-up Setup"}</span>
+                <span>Atur pesan</span>
               </h2>
-              <span className="text-xs text-[var(--muted)]">WhatsApp Direct</span>
             </div>
 
             {/* Scenario Picker */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--text)] block">
-                {locale === "id" ? "Pilih Skenario Interaksi:" : "Select Scenario:"}
+              <label className="text-[13px] font-semibold text-[var(--text)] block">
+                Tahap
               </label>
               <div className="space-y-1.5">
                 {SCENARIOS.map((s) => (
@@ -146,12 +145,12 @@ export default function FollowupPage() {
                     onClick={() => setSelectedScenario(s.id)}
                     className={`w-full p-2.5 rounded-xl border text-left transition-all ${
                       selectedScenario === s.id
-                        ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-xs"
+                        ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] shadow-xs"
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)] hover:border-[var(--muted)]"
                     }`}
                   >
-                    <div className="text-xs font-bold">{locale === "id" ? s.labelId : s.labelEn}</div>
-                    <div className={`text-[11px] ${selectedScenario === s.id ? "text-white/80" : "text-[var(--muted)]"}`}>
+                    <div className="text-[13px] font-bold">{locale === "id" ? s.labelId : s.labelEn}</div>
+                    <div className={`text-[13px] ${selectedScenario === s.id ? "text-white/80" : "text-[var(--muted)]"}`}>
                       {locale === "id" ? s.descId : s.descEn}
                     </div>
                   </button>
@@ -160,10 +159,10 @@ export default function FollowupPage() {
             </div>
 
             {/* Form Fields */}
-            <div className="space-y-3 text-xs pt-2 border-t border-[var(--border)]">
+            <div className="space-y-3 text-[13px] pt-2 border-t border-[var(--border)]">
               <div>
                 <label className="font-semibold text-[var(--text)] block mb-1">
-                  {locale === "id" ? "Pilih Properti:" : "Target Property:"}
+                  Properti
                 </label>
                 <select
                   value={selectedListingId}
@@ -181,7 +180,7 @@ export default function FollowupPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nama Klien / Prospek" : "Client Name"}
+                    Nama klien
                   </label>
                   <input
                     type="text"
@@ -192,7 +191,7 @@ export default function FollowupPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-[var(--text)] block mb-1">
-                    {locale === "id" ? "Nomor WhatsApp" : "WhatsApp Number"}
+                    Nomor WhatsApp
                   </label>
                   <input
                     type="text"
@@ -205,21 +204,21 @@ export default function FollowupPage() {
 
               <div>
                 <label className="font-semibold text-[var(--text)] block mb-1">
-                  {locale === "id" ? "Gaya Bahasa / Tone" : "Tone Style"}
+                  Gaya bahasa
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "polite", label: "Sopan & Hangat" },
-                    { id: "casual", label: "Santai & Akrab" },
-                    { id: "urgent", label: "Peluang Terbatas" },
+                    { id: "polite", label: "Sopan" },
+                    { id: "casual", label: "Santai" },
+                    { id: "urgent", label: "Mendesak" },
                   ].map((t) => (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => setTone(t.id as "polite" | "casual" | "urgent")}
-                      className={`py-1.5 text-xs rounded-lg border text-center transition-colors ${
+                      className={`py-1.5 text-[13px] rounded-lg border text-center transition-colors ${
                         tone === t.id
-                          ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold"
+                          ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] font-semibold"
                           : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
                       }`}
                     >
@@ -233,14 +232,14 @@ export default function FollowupPage() {
                 type="button"
                 onClick={handleGenerate}
                 disabled={loading}
-                className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-xs"
+                className="w-full py-3 bg-[var(--accent)] text-neutral-950 text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-xs"
               >
                 {loading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <Sparkles className="w-4 h-4" />
                 )}
-                <span>{loading ? "Menyusun Pesan..." : "Generate Pesan WhatsApp"}</span>
+                <span>{loading ? "Menulis..." : "Tulis pesan"}</span>
               </button>
             </div>
           </div>
@@ -252,17 +251,16 @@ export default function FollowupPage() {
             <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text)]">
-                  Pratinjau Pesan WhatsApp
+                <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--text)]">
+                  Pratinjau
                 </span>
-                <span className="text-xs text-[var(--muted)]">· Siap Kirim</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-xs font-semibold text-[var(--text)] flex items-center gap-1.5 hover:bg-[var(--surface)] transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[13px] font-semibold text-[var(--text)] flex items-center gap-1.5 hover:bg-[var(--surface)] transition-colors"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? "Tersalin!" : "Salin Pesan"}</span>
@@ -271,7 +269,7 @@ export default function FollowupPage() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-emerald-700 shadow-xs transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[13px] font-semibold flex items-center gap-1.5 hover:bg-emerald-700 shadow-xs transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Buka WhatsApp Web</span>
@@ -281,21 +279,21 @@ export default function FollowupPage() {
 
             {/* Chat Bubble Simulation */}
             <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 relative">
-              <div className="text-xs text-[var(--text)] leading-relaxed whitespace-pre-wrap font-sans">
+              <div className="text-[13px] text-[var(--text)] leading-relaxed whitespace-pre-wrap font-sans">
                 {generatedMessage}
               </div>
-              <div className="text-[10px] text-[var(--muted)] text-right mt-3 font-mono">
-                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Terenkripsi
+              <div className="text-xs text-[var(--muted)] text-right mt-3 font-mono">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
 
             {/* Practical Advice for Agent */}
-            <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-1.5 text-xs">
+            <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-1.5 text-[13px]">
               <span className="font-bold text-[var(--text)] block">
-                💡 Tips Closing Praktis:
+                Tips
               </span>
               <p className="text-[var(--muted)] leading-relaxed">
-                Kirim pesan ini antara jam 09:30 – 11:30 atau 16:30 – 18:30 (jam luang prospek). Lampirkan pula link flyer dari Flyer Studio untuk meningkatkan daya tarik visual!
+                Kirim pesan ini antara jam 09:30 – 11:30 atau 16:30 – 18:30 (jam luang prospek). Lampirkan juga flyer dari Pembuat Flyer.
               </p>
             </div>
           </div>

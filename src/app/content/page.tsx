@@ -140,23 +140,23 @@ export default function ContentStudioPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Social Content Studio" : "Social Content Studio"}
-      subtitle={locale === "id" ? "Hook carousel Instagram, skrip video TikTok, dan newsletter pasar properti" : "Instagram hooks, TikTok scripts, and market update newsletters"}
+      title="Konten Media Sosial"
+      subtitle="Ide carousel Instagram, skrip video, dan update pasar"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Platform & Content Settings */}
         <div className="lg:col-span-5 space-y-6">
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-5">
             <h2 className="text-base font-bold text-[var(--text)] pb-3 border-b border-[var(--border)]">
-              Pilihan Format Konten
+              Format
             </h2>
 
             {/* Platform Selector */}
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-3 gap-2 text-[13px]">
               {[
-                { id: "instagram", label: "Instagram Carousel", icon: Share2 },
-                { id: "tiktok", label: "TikTok Video Script", icon: Video },
-                { id: "newsletter", label: "Market Newsletter", icon: FileText },
+                { id: "instagram", label: "Carousel Instagram", icon: Share2 },
+                { id: "tiktok", label: "Skrip video TikTok", icon: Video },
+                { id: "newsletter", label: "Update pasar", icon: FileText },
               ].map((p) => {
                 const Icon = p.icon;
                 return (
@@ -167,7 +167,7 @@ export default function ContentStudioPage() {
                     onClick={() => handleSelectPlatform(p.id as "instagram" | "tiktok" | "newsletter")}
                     className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                       platform === p.id
-                        ? "bg-[var(--accent)] text-white border-[var(--accent)] font-semibold shadow-xs"
+                        ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)] font-semibold shadow-xs"
                         : "bg-[var(--bg)] text-[var(--text)] border-[var(--border)]"
                     }`}
                   >
@@ -178,9 +178,9 @@ export default function ContentStudioPage() {
               })}
             </div>
 
-            <div className="space-y-3 text-xs pt-2 border-t border-[var(--border)]">
+            <div className="space-y-3 text-[13px] pt-2 border-t border-[var(--border)]">
               <div>
-                <label className="font-semibold text-[var(--text)] block mb-1">Pilih Properti:</label>
+                <label className="font-semibold text-[var(--text)] block mb-1">Properti</label>
                 <select
                   value={selectedListingId}
                   onChange={(e) => handleSelectListingChange(e.target.value)}
@@ -198,10 +198,10 @@ export default function ContentStudioPage() {
                 type="button"
                 onClick={handleGenerate}
                 disabled={loading}
-                className="w-full py-3 bg-[var(--accent)] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 bg-[var(--accent)] text-neutral-950 text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                <span>{loading ? "Menyusun Konten..." : "Generate Konten Media Sosial"}</span>
+                <span>{loading ? "Menulis..." : "Tulis konten"}</span>
               </button>
             </div>
           </div>
@@ -211,13 +211,13 @@ export default function ContentStudioPage() {
         <div className="lg:col-span-7 space-y-6">
           <div className="p-6 md:p-8 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-              <span className="text-xs font-mono font-bold uppercase text-[var(--accent)]">
-                {platform.toUpperCase()} POST DRAFT
+              <span className="text-[13px] font-mono font-bold uppercase text-[var(--accent-text)]">
+                Hasil
               </span>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-xs font-semibold text-[var(--text)] flex items-center gap-1.5 hover:bg-[var(--surface)]"
+                className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[13px] font-semibold text-[var(--text)] flex items-center gap-1.5 hover:bg-[var(--surface)]"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Tersalin!" : "Salin Caption"}</span>
@@ -226,8 +226,8 @@ export default function ContentStudioPage() {
 
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-1.5">
-                <span className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">
-                  Hook Pembuka (Attention Grabber)
+                <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider">
+                  Kalimat pembuka
                 </span>
                 <p className="text-sm font-bold text-[var(--text)] leading-snug">
                   {contentOutput.hook}
@@ -235,15 +235,15 @@ export default function ContentStudioPage() {
               </div>
 
               <div className="space-y-2">
-                <span className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">
-                  Isi Caption / Skrip
+                <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider">
+                  Isi
                 </span>
-                <p className="text-xs md:text-sm text-[var(--text)] leading-relaxed whitespace-pre-line">
+                <p className="text-[13px] md:text-sm text-[var(--text)] leading-relaxed whitespace-pre-line">
                   {contentOutput.body}
                 </p>
               </div>
 
-              <div className="pt-2 flex flex-wrap gap-1.5 text-xs font-mono text-[var(--accent)]">
+              <div className="pt-2 flex flex-wrap gap-1.5 text-[13px] font-mono text-[var(--accent-text)]">
                 {contentOutput.hashtags.map((h, i) => (
                   <span key={i} className="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)]">
                     {h}

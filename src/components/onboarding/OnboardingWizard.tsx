@@ -119,10 +119,10 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                 className="text-base font-bold text-[var(--text)] tracking-tight"
               >
                 {locale === "id"
-                  ? "Panduan Onboarding Mandiri Agen Brighton"
-                  : "Brighton Agent Fast-Track Onboarding"}
+                  ? "Isi data agen"
+                  : "Agent setup"}
               </h2>
-              <p className="text-xs text-[var(--muted)]">
+              <p className="text-[13px] text-[var(--muted)]">
                 {locale === "id"
                   ? `Langkah ${step} dari 3: Siap menerbitkan materi pemasaran dalam 3 menit`
                   : `Step ${step} of 3: Ready your marketing workspace in 3 minutes`}
@@ -154,16 +154,16 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
             <div>
               {step === 1 && (
                 <div className="space-y-5">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Langkah 1 · Profil & Kantor Cabang Brighton</span>
+                    <span>Langkah 1 · Profil & kantor</span>
                   </div>
 
-                  <p className="text-xs text-[var(--muted)] leading-relaxed">
+                  <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                     Identitas agen akan tersemat secara otomatis pada flyer 300 DPI, draf listing, dan kartu nama digital tanpa perlu input ulang.
                   </p>
 
-                  <div className="space-y-4 text-xs">
+                  <div className="space-y-4 text-[13px]">
                     <div>
                       <label className="block font-semibold text-[var(--text)] mb-1">
                         Nama Lengkap Agen
@@ -178,7 +178,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                         className="w-full px-3.5 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[#f5b800]"
                       />
                       {errors.agentName && (
-                        <p className="text-[11px] text-rose-500 mt-1 font-medium">
+                        <p className="text-[13px] text-rose-500 mt-1 font-medium">
                           {errors.agentName}
                         </p>
                       )}
@@ -187,7 +187,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block font-semibold text-[var(--text)] mb-1">
-                          Cabang Kantor Brighton
+                          Kantor cabang
                         </label>
                         <select
                           value={formData.agencyOffice}
@@ -206,7 +206,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                           ))}
                         </select>
                         {errors.agencyOffice && (
-                          <p className="text-[11px] text-rose-500 mt-1 font-medium">
+                          <p className="text-[13px] text-rose-500 mt-1 font-medium">
                             {errors.agencyOffice}
                           </p>
                         )}
@@ -248,11 +248,11 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                         className="w-full px-3.5 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)] font-mono focus-visible:ring-2 focus-visible:ring-[#f5b800]"
                       />
                       {errors.whatsappNumber && (
-                        <p className="text-[11px] text-rose-500 mt-1 font-medium">
+                        <p className="text-[13px] text-rose-500 mt-1 font-medium">
                           {errors.whatsappNumber}
                         </p>
                       )}
-                      <p className="text-[10px] text-[var(--muted)] mt-1">
+                      <p className="text-xs text-[var(--muted)] mt-1">
                         Gunakan awalan 62 atau 08 untuk pembuatan link wa.me dan QR scan otomatis.
                       </p>
                     </div>
@@ -262,18 +262,18 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
 
               {step === 2 && (
                 <div className="space-y-5">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     <Palette className="w-4 h-4" />
-                    <span>Langkah 2 · Brand Kit Standar Brighton Real Estate</span>
+                    <span>Langkah 2 · Identitas brand</span>
                   </div>
 
-                  <p className="text-xs text-[var(--muted)] leading-relaxed">
-                    Setelan warna korporat Brighton Real Estate (Kuning Terang #f5b800 dan Hitam Pekat Kontras) memberikan keterbacaan tertinggi di layar maupun cetak brosur.
+                  <p className="text-[13px] text-[var(--muted)] leading-relaxed">
+                    Warna ini dipakai di flyer dan kartu nama Anda.
                   </p>
 
                   {/* Brand Lockup Preview */}
                   <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--bg)]/50 space-y-3">
-                    <span className="text-[10px] font-bold uppercase text-[var(--muted)] tracking-wider">
+                    <span className="text-xs font-bold uppercase text-[var(--muted)] tracking-wider">
                       Pratinjau Stempel Identitas Agen:
                     </span>
                     <div className="flex items-center justify-between p-4 rounded-xl bg-white text-neutral-900 border border-neutral-200 shadow-xs">
@@ -288,24 +288,24 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                           <div className="font-extrabold text-sm tracking-tight leading-none text-neutral-950 uppercase">
                             BRIGHTON REAL ESTATE
                           </div>
-                          <div className="text-[11px] font-semibold text-neutral-600 mt-1">
+                          <div className="text-[13px] font-semibold text-neutral-600 mt-1">
                             {formData.agentName} · {formData.agencyOffice}
                           </div>
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#f5b800] text-neutral-950">
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-[#f5b800] text-neutral-950">
                           AGEN RESMI
                         </span>
-                        <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
+                        <div className="text-xs text-neutral-500 font-mono mt-0.5">
                           {formData.licenseNumber}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3 text-xs">
+                  <div className="space-y-3 text-[13px]">
                     <label className="block font-semibold text-[var(--text)]">
                       Warna Utama Korporat (Hex Code)
                     </label>
@@ -326,12 +326,12 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                         }
                         className="w-36 px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--text)] font-mono"
                       />
-                      <span className="text-[11px] text-[var(--muted)]">
-                        (Standar Brighton: #f5b800)
+                      <span className="text-[13px] text-[var(--muted)]">
+                        (bawaan: #f5b800)
                       </span>
                     </div>
                     {errors.primaryColor && (
-                      <p className="text-[11px] text-rose-500 font-medium">
+                      <p className="text-[13px] text-rose-500 font-medium">
                         {errors.primaryColor}
                       </p>
                     )}
@@ -341,12 +341,12 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
 
               {step === 3 && (
                 <div className="space-y-5">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     <Zap className="w-4 h-4" />
                     <span>Langkah 3 · Pilih Fitur Perdana untuk Diluncurkan</span>
                   </div>
 
-                  <p className="text-xs text-[var(--muted)] leading-relaxed">
+                  <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                     Semua konfigurasi profil telah siap! Pilih alat pertama yang ingin Anda operasikan hari ini:
                   </p>
 
@@ -354,7 +354,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                     {[
                       {
                         id: "flyer",
-                        title: "Flyer Studio 300 DPI",
+                        title: "Pembuat Flyer",
                         desc: "Desain brosur multi-format siap cetak & medsos dengan stempel logo Brighton.",
                         icon: Palette,
                         badge: "Paling Populer",
@@ -400,17 +400,17 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                           }`}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <div className="p-2 rounded-lg bg-[var(--surface)] text-[var(--accent)] shadow-2xs">
+                            <div className="p-2 rounded-lg bg-[var(--surface)] text-[var(--accent-text)] shadow-2xs">
                               <Icon className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
                               {tool.badge}
                             </span>
                           </div>
-                          <div className="font-bold text-xs text-[var(--text)] mb-1">
+                          <div className="font-bold text-[13px] text-[var(--text)] mb-1">
                             {tool.title}
                           </div>
-                          <p className="text-[11px] text-[var(--muted)] leading-relaxed">
+                          <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                             {tool.desc}
                           </p>
                         </button>
@@ -426,7 +426,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                   <button
                     type="button"
                     onClick={() => setStep((s) => s - 1)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg)] transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl text-[13px] font-semibold text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg)] transition-colors flex items-center gap-1.5"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Kembali</span>
@@ -438,7 +438,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#f5b800] text-neutral-950 hover:bg-[#e5ac00] shadow-sm flex items-center gap-2 transition-all"
+                  className="px-5 py-2.5 rounded-xl text-[13px] font-bold bg-[#f5b800] text-neutral-950 hover:bg-[#e5ac00] shadow-sm flex items-center gap-2 transition-all"
                 >
                   <span>{step === 3 ? "Selesaikan & Buka Fitur" : "Lanjutkan"}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -453,18 +453,18 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
               </div>
 
               <div className="space-y-2 max-w-md mx-auto">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <span className="text-[13px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                   Onboarding Selesai · Brighton Agent Ready
                 </span>
                 <h3 className="text-xl md:text-2xl font-bold text-[var(--text)]">
                   Selamat Datang, {formData.agentName}!
                 </h3>
-                <p className="text-xs text-[var(--muted)] leading-relaxed">
+                <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                   Ruang kerja agen properti Anda telah siap dengan lisensi terverifikasi dan brand kit korporat Brighton Real Estate.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] max-w-sm mx-auto text-left text-xs space-y-1.5">
+              <div className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] max-w-sm mx-auto text-left text-[13px] space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-[var(--muted)]">Kantor:</span>
                   <span className="font-semibold text-[var(--text)]">{formData.agencyOffice}</span>
@@ -483,7 +483,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                 <button
                   type="button"
                   onClick={handleFinishAndNavigate}
-                  className="px-6 py-3 rounded-xl text-xs font-bold bg-[#f5b800] text-neutral-950 hover:bg-[#e5ac00] shadow-md inline-flex items-center gap-2 transition-transform hover:scale-[1.02]"
+                  className="px-6 py-3 rounded-xl text-[13px] font-bold bg-[#f5b800] text-neutral-950 hover:bg-[#e5ac00] shadow-md inline-flex items-center gap-2 transition-transform hover:scale-[1.02]"
                 >
                   <span>Mulai Operasikan {getRecommendedStarterPreset(formData.preferredFirstTool).title}</span>
                   <ArrowRight className="w-4 h-4" />

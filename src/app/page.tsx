@@ -122,7 +122,7 @@ export default function LandingPage() {
         {/* Hero */}
         <section className="max-w-6xl mx-auto px-5 pt-14 pb-16 grid lg:grid-cols-2 gap-10 items-center">
           <div className="space-y-6">
-            <span className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--text)]">
+            <span className="inline-flex items-center gap-2 text-[13px] font-bold px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--text)]">
               Untuk agen properti di Indonesia
             </span>
             <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.08]">
@@ -146,7 +146,7 @@ export default function LandingPage() {
             <div className="rounded-xl overflow-hidden border border-[var(--border)]">
               <PhotoIllustration />
             </div>
-            <div className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 space-y-2 text-xs">
+            <div className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 space-y-2 text-[13px]">
               <div className="flex gap-1.5">
                 {(["google", "openai", "anthropic"] as const).map((p, i) => (
                   <span key={p} className={`px-2.5 py-1 rounded-lg font-bold border ${i === 1 ? "bg-[var(--accent)] border-[var(--accent)] text-neutral-950" : "border-[var(--border)]"}`}>
@@ -173,7 +173,7 @@ export default function LandingPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               {FEATURES.map(({ icon: Icon, title, body }) => (
                 <div key={title} className="p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)]">
-                  <Icon className="w-6 h-6 text-[var(--accent)]" />
+                  <Icon className="w-6 h-6 text-[var(--accent-text)]" />
                   <h3 className="mt-4 font-bold">{title}</h3>
                   <p className="mt-1.5 text-sm text-[var(--muted)] leading-relaxed">{body}</p>
                 </div>
@@ -201,11 +201,11 @@ export default function LandingPage() {
                     <h3 className="font-black">{plan.name}</h3>
                     <p className="mt-2 text-2xl font-black">
                       {plan.purchasable ? formatRupiah(plan.priceIdr) : id === "free" ? "Gratis" : "Hubungi kami"}
-                      {plan.purchasable && <span className="text-xs font-medium text-[var(--muted)]"> per 30 hari</span>}
+                      {plan.purchasable && <span className="text-[13px] font-medium text-[var(--muted)]"> per 30 hari</span>}
                     </p>
                     <ul className="mt-4 space-y-1.5 text-sm flex-1">
                       {plan.highlights.map((h) => (
-                        <li key={h} className="flex gap-2"><Check className="w-4 h-4 mt-0.5 text-[var(--accent)] shrink-0" />{h}</li>
+                        <li key={h} className="flex gap-2"><Check className="w-4 h-4 mt-0.5 text-[var(--accent-text)] shrink-0" />{h}</li>
                       ))}
                     </ul>
                     <Link

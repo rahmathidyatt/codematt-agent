@@ -7,7 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
-import { useAgentStore } from "@/lib/store";
+import { SectionTabs, ARCHIVE_TABS } from "@/components/layout/SectionTabs";
 
 interface Article {
   id: string;
@@ -58,14 +58,14 @@ const ARTICLES: Article[] = [
 ];
 
 export default function KnowledgeBasePage() {
-  const { locale } = useAgentStore();
   const [expandedId, setExpandedId] = useState<string>("legal-1");
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Basis Pengetahuan Properti" : "Real Estate Knowledge Base"}
-      subtitle={locale === "id" ? "Panduan legalitas tanah, perpajakan properti, dan skrip negosiasi closing" : "Legal certificates, property taxes, and closing negotiation playbooks"}
+      title="Arsip & Panduan"
+      subtitle="Listing tersimpan, draf flyer, dan panduan properti"
     >
+      <SectionTabs tabs={ARCHIVE_TABS} />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="space-y-4">
           {ARTICLES.map((art) => {
@@ -80,7 +80,7 @@ export default function KnowledgeBasePage() {
                   onClick={() => setExpandedId(isExpanded ? "" : art.id)}
                 >
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                    <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--accent-text)]">
                       {art.category}
                     </span>
                     <h3 className="text-base font-bold text-[var(--text)]">{art.title}</h3>
@@ -95,12 +95,12 @@ export default function KnowledgeBasePage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="pt-3 border-t border-[var(--border)] space-y-3 text-xs md:text-sm text-[var(--muted)] leading-relaxed">
+                  <div className="pt-3 border-t border-[var(--border)] space-y-3 text-[13px] md:text-sm text-[var(--muted)] leading-relaxed">
                     <p>{art.content}</p>
                     <ul className="space-y-2 pt-1">
                       {art.bulletPoints.map((pt, i) => (
-                        <li key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)]">
-                          <ShieldCheck className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                        <li key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[13px] text-[var(--text)]">
+                          <ShieldCheck className="w-4 h-4 text-[var(--accent-text)] shrink-0 mt-0.5" />
                           <span className="leading-relaxed">{pt}</span>
                         </li>
                       ))}
