@@ -104,6 +104,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/00-bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f docs/phase2-supabase-schema-review.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/01-rls-integration.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118000000_codematt_billing_quota.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/02-billing-quota.sql
 
       - name: Live AI fail-closed HTTP gates (dummy credentials, no provider calls)
         shell: bash

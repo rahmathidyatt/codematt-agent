@@ -190,5 +190,7 @@ export function getDirectiveMethodLabel(method: RedactionPatchMethod): string {
       return "Mosaic Pixelate";
     case "color_fill":
       return "Neutral Clean Match";
+    case "ai_inpaint":
+      return "AI Inpaint (Gemini / ChatGPT)";
   }
 }

@@ -300,12 +300,12 @@ export default function DashboardPage() {
                 <ArrowRight className="w-3.5 h-3.5 text-[var(--muted)]" />
               </Link>
               <Link
-                href="/usage"
+                href="/pricing"
                 className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5 font-semibold text-[var(--text)]">
                   <CreditCard className="w-4 h-4 text-[var(--accent)]" />
-                  <span>Kuota & Billing</span>
+                  <span>Langganan & Kuota</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-[var(--muted)]" />
               </Link>
