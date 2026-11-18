@@ -5,7 +5,7 @@ export type PhotoDirectiveType =
   | "remove_wires"
   | "custom";
 
-export type RedactionPatchMethod = "inpaint" | "blur" | "pixelate" | "color_fill";
+export type RedactionPatchMethod = "inpaint" | "blur" | "pixelate" | "color_fill" | "ai_inpaint";
 
 export interface TargetRegion {
   x: number;

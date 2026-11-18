@@ -20,6 +20,9 @@ import {
   Car,
   Phone,
   Zap,
+  Scan,
+  Crop,
+  Loader2,
 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { useAgentStore } from "@/lib/store";
@@ -38,6 +41,16 @@ import {
   formatRegionCoordinates,
   getDirectiveMethodLabel,
 } from "@/features/photo-editor/photo-utils";
+import { RESIZE_PRESETS, padRegion, planResize } from "@/features/photo-editor/resize";
+import type { DetectedBox } from "@/lib/ai/provider-parsers";
+import { PLANS } from "@/config/plans";
+import { errorMessage, newIdempotencyKey, useBilling } from "@/lib/billing/use-billing";
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+type AiProvider = "google" | "openai";
 
 interface SamplePhoto {
   id: string;
@@ -46,7 +59,7 @@ interface SamplePhoto {
   width: number;
   height: number;
   defaultDirectiveType: PhotoDirectiveType;
-  suggestedRegion: TargetRegion;
+  suggestedRegion: TargetRegion | null;
   presetInstruction: string;
   render: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
 }
@@ -273,8 +286,15 @@ const SAMPLE_PHOTOS: SamplePhoto[] = [
   },
 ];
 
+const MAX_EDIT_WIDTH = 2048;
+
 export default function PropertyPhotoEditorPage() {
   const { locale } = useAgentStore();
+  const billing = useBilling();
+  const [aiProvider, setAiProvider] = useState<AiProvider>("google");
+  const [aiBusy, setAiBusy] = useState<null | "edit" | "detect">(null);
+  const [detectedBoxes, setDetectedBoxes] = useState<DetectedBox[]>([]);
+  const [resizePresetId, setResizePresetId] = useState<string>(RESIZE_PRESETS[0].id);
 
   const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -318,6 +338,7 @@ export default function PropertyPhotoEditorPage() {
       setTargetRegion(sample.suggestedRegion);
       setAppliedDirectives([]);
       setCanvasHistory([]);
+      setDetectedBoxes([]);
 
       const origCanvas = originalCanvasRef.current;
       const actCanvas = activeCanvasRef.current;
@@ -417,6 +438,148 @@ export default function PropertyPhotoEditorPage() {
     setStartPoint(null);
   };
 
+  const recordDirective = (method: RedactionPatchMethod, region: TargetRegion) => {
+    const directiveTemplate = PRESET_DIRECTIVES.find((d) => d.type === selectedDirectiveType);
+    setAppliedDirectives((prev) => [{
+      id: `dir-${Date.now()}`,
+      type: selectedDirectiveType,
+      label: directiveTemplate?.title || "Instruksi Khusus",
+      method,
+      region: { ...region },
+      instruction: instructionText,
+      timestamp: new Date().toLocaleTimeString(locale === "id" ? "id-ID" : "en-US", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      }),
+    }, ...prev]);
+  };
+
+  /** Sends the photo to /api/photo/edit and pastes back ONLY the selected regions. */
+  const runAiEdit = async (regions: TargetRegion[]) => {
+    const canvas = activeCanvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx || regions.length === 0 || aiBusy) return;
+    setAiBusy("edit");
+    try {
+      const photo = await canvasToBlob(canvas, "image/jpeg", 0.92);
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      const mctx = maskCanvas.getContext("2d");
+      if (!photo || !mctx) throw new Error("ENCODE_FAILED");
+      // OpenAI mask: transparent pixels = area to edit.
+      mctx.fillStyle = "#000";
+      mctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+      const padded = regions.map((r) => padRegion(r, 6, canvas.width, canvas.height));
+      padded.forEach((r) => mctx.clearRect(r.x, r.y, r.width, r.height));
+      const mask = await canvasToBlob(maskCanvas, "image/png");
+
+      const form = new FormData();
+      form.append("image", photo, "photo.jpg");
+      if (mask && aiProvider === "openai") form.append("mask", mask, "mask.png");
+      form.append("provider", aiProvider);
+      const instruction = instructionText.trim().length >= 5
+        ? instructionText.trim()
+        : "Hapus nomor rumah, nomor telepon, dan plat nomor di area yang ditandai.";
+      form.append("instruction", instruction.slice(0, 300));
+      form.append("regions", JSON.stringify(regions.map((r) => ({
+        x: Math.round(r.x), y: Math.round(r.y), width: Math.max(2, Math.round(r.width)), height: Math.max(2, Math.round(r.height)),
+      }))));
+      form.append("width", String(canvas.width));
+      form.append("height", String(canvas.height));
+      form.append("idempotencyKey", newIdempotencyKey("photo"));
+
+      const res = await fetch("/api/photo/edit", { method: "POST", body: form });
+      const data = await res.json();
+      if (!data?.ok || typeof data.imageBase64 !== "string") {
+        setInstructionError(errorMessage(data?.code));
+        return;
+      }
+      const img = new Image();
+      img.src = `data:${data.mimeType || "image/png"};base64,${data.imageBase64}`;
+      await img.decode();
+
+      const preSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setCanvasHistory((prev) => [...prev, preSnapshot]);
+      ctx.save();
+      ctx.beginPath();
+      padded.forEach((r) => ctx.rect(r.x, r.y, r.width, r.height));
+      ctx.clip();
+      // The AI may return a different resolution; scale it onto our canvas.
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      regions.forEach((r) => recordDirective("ai_inpaint", r));
+      setDetectedBoxes([]);
+      void billing.refresh();
+      showToast(locale === "id" ? "Area berhasil dibersihkan dengan AI." : "Area cleaned with AI.");
+    } catch {
+      setInstructionError(errorMessage(null));
+    } finally {
+      setAiBusy(null);
+    }
+  };
+
+  const runDetect = async () => {
+    const canvas = activeCanvasRef.current;
+    if (!canvas || aiBusy) return;
+    setAiBusy("detect");
+    setInstructionError(null);
+    try {
+      const photo = await canvasToBlob(canvas, "image/jpeg", 0.9);
+      if (!photo) throw new Error("ENCODE_FAILED");
+      const form = new FormData();
+      form.append("image", photo, "photo.jpg");
+      form.append("width", String(canvas.width));
+      form.append("height", String(canvas.height));
+      form.append("idempotencyKey", newIdempotencyKey("detect"));
+      const res = await fetch("/api/photo/detect", { method: "POST", body: form });
+      const data = await res.json();
+      if (!data?.ok || !Array.isArray(data.boxes)) {
+        setInstructionError(errorMessage(data?.code));
+        return;
+      }
+      const boxes = data.boxes as DetectedBox[];
+      setDetectedBoxes(boxes);
+      if (boxes[0]) setTargetRegion({ x: boxes[0].x, y: boxes[0].y, width: boxes[0].width, height: boxes[0].height });
+      void billing.refresh();
+      showToast(boxes.length
+        ? `${boxes.length} area terdeteksi. Klik salah satu atau hapus semuanya.`
+        : "Tidak ada nomor rumah / telepon yang terdeteksi.");
+    } catch {
+      setInstructionError(errorMessage(null));
+    } finally {
+      setAiBusy(null);
+    }
+  };
+
+  const handleResizeDownload = async () => {
+    const canvas = activeCanvasRef.current;
+    const preset = RESIZE_PRESETS.find((p) => p.id === resizePresetId);
+    if (!canvas || !preset) return;
+    const plan = planResize(canvas.width, canvas.height, preset);
+    const out = document.createElement("canvas");
+    out.width = plan.outWidth;
+    out.height = plan.outHeight;
+    const octx = out.getContext("2d");
+    if (!octx) return;
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+    if (preset.format === "image/jpeg") {
+      octx.fillStyle = "#fff";
+      octx.fillRect(0, 0, out.width, out.height);
+    }
+    octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, plan.outWidth, plan.outHeight);
+    const blob = await canvasToBlob(out, preset.format, preset.quality);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Brighton-${preset.id}-${plan.outWidth}x${plan.outHeight}.${preset.format === "image/png" ? "png" : "jpg"}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2_000);
+    showToast(`Foto ${plan.outWidth}×${plan.outHeight} (${Math.round(blob.size / 1024)} KB) diunduh.`);
+  };
+
   // Apply the directive with strict pixel adherence
   const handleExecuteDirective = () => {
     const validation = validateDirectiveInstruction(instructionText);
@@ -437,6 +600,11 @@ export default function PropertyPhotoEditorPage() {
           ? "Silakan tentukan area target (klik & drag pada kanvas foto)"
           : "Please specify target area by dragging on the photo"
       );
+      return;
+    }
+
+    if (patchMethod === "ai_inpaint") {
+      void runAiEdit([targetRegion]);
       return;
     }
 
@@ -521,16 +689,11 @@ export default function PropertyPhotoEditorPage() {
           id: `custom-${Date.now()}`,
           title: file.name,
           description: "Foto properti kustom diunggah oleh agen.",
-          width: img.width > 1200 ? 1200 : img.width,
+          width: img.width > MAX_EDIT_WIDTH ? MAX_EDIT_WIDTH : img.width,
           height:
-            img.width > 1200 ? Math.round((img.height * 1200) / img.width) : img.height,
+            img.width > MAX_EDIT_WIDTH ? Math.round((img.height * MAX_EDIT_WIDTH) / img.width) : img.height,
           defaultDirectiveType: "custom",
-          suggestedRegion: {
-            x: Math.round(img.width * 0.2),
-            y: Math.round(img.height * 0.3),
-            width: 140,
-            height: 70,
-          },
+          suggestedRegion: null,
           presetInstruction: "Sensor area yang dipilih sesuai arahan agen.",
           render: (ctx, w, h) => {
             ctx.drawImage(img, 0, 0, w, h);
@@ -721,9 +884,10 @@ export default function PropertyPhotoEditorPage() {
               <label className="text-xs font-bold text-[var(--text)] block">
                 {locale === "id" ? "Metode Penyamaran / Sensor:" : "Redaction Technique:"}
               </label>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 {(
                   [
+                    { id: "ai_inpaint", label: "AI Hapus", desc: "Paling rapi" },
                     { id: "inpaint", label: "Smart Inpaint", desc: "Tekstur Alami" },
                     { id: "blur", label: "Privacy Blur", desc: "Frosted Halus" },
                     { id: "pixelate", label: "Pixelate", desc: "Mosaic Klasik" },
@@ -752,6 +916,80 @@ export default function PropertyPhotoEditorPage() {
               </div>
             </div>
 
+            {/* AI options */}
+            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-[var(--text)]">Bantuan AI</span>
+                {billing.mode === "live" && billing.usage && billing.limits ? (
+                  <span className="font-mono text-[10px] text-[var(--muted)]">
+                    {PLANS[billing.planId].name} · edit {billing.usage.ai_photo}/{billing.limits.ai_photo}
+                  </span>
+                ) : (
+                  <span className="font-mono text-[10px] text-[var(--muted)]">
+                    {billing.mode === "signed-out" ? "Perlu login" : "Mode demo"}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={runDetect}
+                disabled={aiBusy !== null}
+                className="w-full py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {aiBusy === "detect" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4 text-[var(--accent)]" />}
+                <span>Deteksi otomatis nomor rumah / telepon / plat</span>
+              </button>
+              {detectedBoxes.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap gap-1.5">
+                    {detectedBoxes.map((b, i) => (
+                      <button
+                        key={`${b.x}-${b.y}-${i}`}
+                        type="button"
+                        onClick={() => setTargetRegion({ x: b.x, y: b.y, width: b.width, height: b.height })}
+                        className="px-2 py-1 rounded-md border border-cyan-500/50 bg-cyan-500/10 text-[11px]"
+                      >
+                        {i + 1}. {b.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setPatchMethod("ai_inpaint"); void runAiEdit(detectedBoxes); }}
+                    disabled={aiBusy !== null}
+                    className="w-full py-2 rounded-lg bg-[var(--accent)] text-neutral-950 font-black disabled:opacity-50"
+                  >
+                    Hapus semua area terdeteksi dengan AI
+                  </button>
+                </div>
+              )}
+              {patchMethod === "ai_inpaint" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[var(--muted)]">Model edit:</span>
+                  {(["google", "openai"] as const).map((p) => {
+                    const locked = billing.mode === "live" && !billing.providers.includes(p);
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setAiProvider(p)}
+                        disabled={locked}
+                        title={locked ? "Butuh paket Starter atau lebih tinggi" : undefined}
+                        className={`px-2.5 py-1 rounded-md border font-bold disabled:opacity-40 ${
+                          aiProvider === p ? "bg-[var(--accent)] text-neutral-950 border-[var(--accent)]" : "border-[var(--border)]"
+                        }`}
+                      >
+                        {p === "google" ? "Gemini" : "ChatGPT"}{locked ? " 🔒" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-[10px] text-[var(--muted)] leading-relaxed">
+                Hanya area yang ditandai yang diganti dengan hasil AI; bagian foto lain tetap asli. Deteksi memakai 1 kuota pesan, hapus memakai 1 kuota edit foto. Pakai hanya untuk foto milik Anda atau kantor.
+              </p>
+            </div>
+
             {/* Target Coordinate Indicator */}
             <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs flex items-center justify-between">
               <span className="text-[var(--muted)] text-[11px]">Koordinat Target Terpilih:</span>
@@ -766,13 +1004,16 @@ export default function PropertyPhotoEditorPage() {
             <button
               type="button"
               onClick={handleExecuteDirective}
-              className="w-full py-3 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer uppercase tracking-wider"
+              disabled={aiBusy !== null}
+              className="w-full py-3 disabled:opacity-60 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-xs cursor-pointer uppercase tracking-wider"
             >
-              <Sparkles className="w-4 h-4 text-neutral-950" />
+              {aiBusy === "edit" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-neutral-950" />}
               <span>
-                {locale === "id"
-                  ? "Jalankan Instruksi (Terapkan Edit)"
-                  : "Execute Privacy Directive"}
+                {aiBusy === "edit"
+                  ? "AI sedang memproses..."
+                  : locale === "id"
+                    ? "Jalankan Instruksi (Terapkan Edit)"
+                    : "Execute Privacy Directive"}
               </span>
             </button>
           </div>
@@ -900,6 +1141,23 @@ export default function PropertyPhotoEditorPage() {
                   className="rounded-lg shadow-xs"
                 />
 
+                {!viewOriginal && detectedBoxes.map((b, i) => (
+                  <div
+                    key={`box-${i}`}
+                    style={{
+                      position: "absolute",
+                      left: `${(b.x / selectedSample.width) * 100}%`,
+                      top: `${(b.y / selectedSample.height) * 100}%`,
+                      width: `${(b.width / selectedSample.width) * 100}%`,
+                      height: `${(b.height / selectedSample.height) * 100}%`,
+                      border: "2px dashed #06b6d4",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span className="text-[8px] font-mono font-bold bg-cyan-600 text-white px-1 rounded">{i + 1}</span>
+                  </div>
+                ))}
+
                 {/* Interactive Target Bounding Box Visual Overlay */}
                 {targetRegion && !viewOriginal && (
                   <div
@@ -949,6 +1207,36 @@ export default function PropertyPhotoEditorPage() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Resize & compress (free, runs in the browser) */}
+          <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
+            <h3 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
+              <Crop className="w-4 h-4 text-[var(--accent)]" />
+              <span>Resize &amp; Kompres</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">Gratis · tanpa AI</span>
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={resizePresetId}
+                onChange={(e) => setResizePresetId(e.target.value)}
+                className="flex-1 px-3 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs text-[var(--text)]"
+                aria-label="Ukuran tujuan"
+              >
+                {RESIZE_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={handleResizeDownload}
+                className="px-4 py-2.5 rounded-xl bg-[var(--accent)] text-neutral-950 text-xs font-black flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Unduh ukuran ini</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-[var(--muted)]">
+              Format persegi/portrait dipotong dari tengah. &ldquo;WhatsApp hemat&rdquo; hanya mengecilkan tanpa memotong. Hasil edit di atas ikut terbawa.
+            </p>
           </div>
 
           {/* Applied Directives Audit Trail Table */}

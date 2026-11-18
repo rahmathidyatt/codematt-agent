@@ -123,5 +123,49 @@ assert.equal(absentSignup.response.status, 503);
 
 assert.equal(health.response.headers.get("x-frame-options"), "DENY");
 
+// Multi-AI chat & billing: demo mode never calls providers or charges quota.
+const chatBody = {
+  provider: "anthropic",
+  idempotencyKey: "chat_smoke_0000000000000001",
+  messages: [{ role: "user", content: "Halo" }],
+};
+const demoChat = await request("/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify(chatBody),
+});
+assert.equal(demoChat.response.status, 200);
+assert.equal(demoChat.body.mode, "demo");
+assert.equal(demoChat.body.model, "demo");
+const crossOriginChat = await request("/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: "https://attacker.test" },
+  body: JSON.stringify(chatBody),
+});
+assert.equal(crossOriginChat.response.status, 403);
+const badChat = await request("/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ ...chatBody, provider: "deepseek" }),
+});
+assert.equal(badChat.response.status, 400);
+const billingMe = await request("/api/billing/me");
+assert.equal(billingMe.response.status, 200);
+assert.equal(billingMe.body.mode, "demo");
+assert.equal(billingMe.body.planId, "free");
+const checkout = await request("/api/billing/checkout", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ planId: "pro" }),
+});
+assert.equal(checkout.response.status, 503);
+const forgedWebhook = await request("/api/billing/midtrans/notification", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ order_id: "CM-PRO-FAKE0001", status_code: "200", gross_amount: "149000.00", signature_key: "0".repeat(128) }),
+});
+assert.equal(forgedWebhook.response.status, 503);
+
 console.log("HTTP smoke passed: health, demo gateway, input validation, fact-only listing.");
+console.log("Billing smoke passed: chat demo, cross-origin blocked, checkout & webhook fail closed.");
 console.log("Phase 2 smoke passed: auth fails closed, cross-origin blocked, isolated database disabled, logout clears cookie.");

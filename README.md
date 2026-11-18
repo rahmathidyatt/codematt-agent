@@ -1,17 +1,23 @@
 # Codematt Agent
 
-**Status: prototipe / demonstrasi, belum siap dipakai sebagai sistem produksi komersial.**
+**Status: beta tertutup. Fitur berbayar sudah ada kodenya, tetapi belum diuji dengan akun produksi.**
 
-Proyek Next.js ini berisi katalog model AI, antarmuka ruang kerja multi-model, alat konten dan flyer properti, dashboard telemetri, serta UI login dan pendaftaran. Sebagian fitur menggunakan data contoh atau penyimpanan lokal browser. Jangan memasukkan data klien sensitif ke mode demo.
+Ruang kerja AI untuk agen properti: chat dengan Gemini, ChatGPT, dan Claude; edit foto listing (resize, hapus nomor rumah/telepon); penulis listing, flyer, dan follow-up WhatsApp; paket langganan dengan pembayaran Midtrans. Jangan memasukkan data klien sensitif ke mode demo.
 
 ## Yang tersedia dan yang belum tersedia
 
-- **UI katalog dan perbandingan model:** dapat dicoba sebagai DEMO. Endpoint `/api/gateway` tidak berpura-pura memanggil OpenAI/Anthropic/DeepSeek/Meta; outputnya secara eksplisit diberi label demonstrasi, dengan pemakaian dan biaya token nol.
-- **Generator konten properti:** mode bawaan hanya menyusun draf berdasarkan fakta yang diberikan. Tidak menambahkan detail properti yang tidak tersedia. Draf harus diverifikasi sebelum publikasi.
-- **Live Gemini:** jalur server telah disiapkan untuk `/api/ai/generate`, tetapi **dinonaktifkan secara bawaan**. Belum ada autentikasi pengguna, kuota persisten, billing, maupun perlindungan komersial secara menyeluruh. Jangan aktifkan live API pada situs publik sebelum backend pengamanan selesai.
-- **Login dan registrasi:** adapter server ke Supabase Auth tersedia secara **opt-in** dan secara default nonaktif. Tanpa konfigurasi `CODEMATT_AUTH_ENABLED`, `APP_ORIGIN`, project ref, dan publishable key yang sesuai, formulir akun tetap nonaktif; akses Mode Demo terpisah. Belum diuji terhadap proyek Codematt yang nyata.
-- **API key klien, dashboard biaya, dan donasi:** hanya contoh UI / perkiraan, tidak menerbitkan credential, menagih pengguna, atau memproses pembayaran.
-- **Data listing, ledger dan profil:** sebagian diisi contoh dan tersimpan di localStorage, bukan database multi-tenant yang aman.
+| Fitur | Status | Keterangan |
+|---|---|---|
+| Workspace agen (listing, flyer, follow-up, brand kit) | Jalan | Data contoh disimpan di localStorage browser |
+| Resize & kompres foto (portal, Instagram, story, WhatsApp) | Jalan | Di browser, gratis, tanpa AI |
+| Chat multi-AI: Gemini, ChatGPT, Claude (`/assistant`) | Siap diuji | `/api/chat`; model dikunci sesuai paket |
+| Deteksi & hapus nomor rumah / telepon / plat (`/photo-editor`) | Siap diuji | Gemini vision + Gemini/OpenAI image edit; hanya area yang ditandai yang diganti |
+| Paket Free / Starter / Pro / Team + kuota bulanan (`/pricing`) | Siap diuji | Kuota di Postgres lewat RPC atomik |
+| Pembayaran Midtrans Snap | Siap diuji | Prabayar 30 hari, tanpa auto-debit |
+| Login Supabase Auth | Siap diuji | Opt-in lewat env |
+| Katalog model & dashboard biaya (`/api/gateway`) | Demo | Angka perkiraan, bukan tagihan |
+
+"Siap diuji" = kode dan test sudah ada, tetapi belum dicoba dengan API key, proyek Supabase, dan akun Midtrans sungguhan. Tanpa env, semua fitur AI otomatis berjalan sebagai **mode demo** (tidak ada panggilan berbayar). Detail alur dan langkah aktivasi: [docs/BILLING.md](docs/BILLING.md).
 
 ## Persyaratan
 
@@ -41,8 +47,10 @@ bun run start
 
 Lihat `.env.example`. Simpan nilai asli hanya di variabel environment server/hosting, tidak di Git.
 
-- `CODEMATT_ENABLE_LIVE_AI=false` secara default
-- `CODEMATT_LIVE_AI_TOKEN` adalah token server-to-server minimum 32 karakter, tidak boleh dikirim ke browser. Pengaktifannya saja **tidak menggantikan autentikasi, rate limit persisten, ataupun perhitungan biaya riil**.
+- `CODEMATT_ENABLE_LIVE_AI=false` secara default. Untuk `/api/chat` dan `/api/photo/*`, mode live juga butuh Supabase Auth + `CODEMATT_SUPABASE_SECRET_KEY` (kuota). Tanpa itu server menolak (fail closed).
+- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`: isi yang dipakai saja. Model bisa diganti lewat `CODEMATT_*_MODEL`.
+- `MIDTRANS_SERVER_KEY` dan `MIDTRANS_IS_PRODUCTION` untuk pembayaran.
+- `CODEMATT_LIVE_AI_TOKEN` (khusus endpoint lama `/api/gateway` dan `/api/ai/generate`) adalah token server-to-server minimum 32 karakter, tidak boleh dikirim ke browser. Pengaktifannya saja **tidak menggantikan autentikasi, rate limit persisten, ataupun perhitungan biaya riil**.
 - `GEMINI_API_KEY` hanya untuk jalur Gemini yang sudah diberi izin server.
 - `APP_ORIGIN` harus alamat asal HTTPS aplikasi yang sebenarnya saat hosting, bukan domain internal Netlify. `CODEMATT_SUPABASE_PROJECT_REF` harus identik dengan subdomain proyek Supabase khusus Codematt. Gunakan `CODEMATT_SUPABASE_URL` dan `CODEMATT_SUPABASE_PUBLISHABLE_KEY` khusus di server, bukan prefiks `NEXT_PUBLIC_`, untuk menghindari ketergantungan konfigurasi runtime pada nilai build browser.
 - Panggilan Auth memiliki pembatasan percobaan per instans sebagai pertahanan tambahan. Sistem produksi masih memerlukan rate limit terpusat dan uji dua akun.
@@ -53,7 +61,7 @@ Lihat `.env.example`. Simpan nilai asli hanya di variabel environment server/hos
 
 ## Dokumentasi
 
-Lihat `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/RISKS.md`, `docs/ROADMAP.md`, dan `docs/VERIFICATION.md`. Sebagian berisi rancangan fase terdahulu, bukan bukti bahwa seluruh fitur kini benar-benar berfungsi.
+Lihat `docs/BILLING.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/RISKS.md`, `docs/ROADMAP.md`, dan `docs/VERIFICATION.md`. Sebagian berisi rancangan fase terdahulu, bukan bukti bahwa seluruh fitur kini benar-benar berfungsi.
 
 ## Tahap 2: verifikasi tambahan
 

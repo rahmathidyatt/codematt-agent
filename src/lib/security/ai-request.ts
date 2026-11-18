@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 export const MAX_AI_REQUEST_BYTES = 16_384;
 
-export async function readBoundedJson(request: Request): Promise<
+export async function readBoundedJson(request: Request, maxBytes: number = MAX_AI_REQUEST_BYTES): Promise<
   | { ok: true; body: Record<string, unknown> }
   | { ok: false; status: number; error: string }
 > {
@@ -10,7 +10,7 @@ export async function readBoundedJson(request: Request): Promise<
     return { ok: false, status: 415, error: "CONTENT_TYPE_NOT_SUPPORTED" };
   }
   const statedSize = Number(request.headers.get("content-length"));
-  if (Number.isFinite(statedSize) && statedSize > MAX_AI_REQUEST_BYTES) {
+  if (Number.isFinite(statedSize) && statedSize > maxBytes) {
     return { ok: false, status: 413, error: "REQUEST_TOO_LARGE" };
   }
 
@@ -24,7 +24,7 @@ export async function readBoundedJson(request: Request): Promise<
       const { value, done } = await reader.read();
       if (done) break;
       bytes += value.byteLength;
-      if (bytes > MAX_AI_REQUEST_BYTES) {
+      if (bytes > maxBytes) {
         await reader.cancel();
         return { ok: false, status: 413, error: "REQUEST_TOO_LARGE" };
       }

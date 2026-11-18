@@ -28,6 +28,8 @@ import {
   Wand2,
 } from "lucide-react";
 import { useAgentStore } from "@/lib/store";
+import { PLANS } from "@/config/plans";
+import { useBilling } from "@/lib/billing/use-billing";
 
 interface WorkspaceShellProps {
   children: ReactNode;
@@ -37,7 +39,7 @@ interface WorkspaceShellProps {
 
 const MODULE_NAV = [
   { href: "/dashboard", labelId: "Dasbor", labelEn: "Dashboard", icon: LayoutDashboard },
-  { href: "/photo-editor", labelId: "Edit Foto Properti", labelEn: "Property Photo Editor", icon: Wand2, badge: "Instruksi AI" },
+  { href: "/photo-editor", labelId: "Edit Foto Properti", labelEn: "Property Photo Editor", icon: Wand2, badge: "AI" },
   { href: "/flyer", labelId: "Flyer Studio", labelEn: "Flyer Studio", icon: Palette, badge: "300 DPI" },
   { href: "/listing", labelId: "Listing Writer", labelEn: "Listing Writer", icon: FileText, badge: "AI" },
   { href: "/followup", labelId: "Follow-up WhatsApp", labelEn: "WhatsApp Follow-up", icon: MessageSquare },
@@ -45,7 +47,7 @@ const MODULE_NAV = [
   { href: "/assistant", labelId: "AI Assistant", labelEn: "AI Assistant", icon: Bot },
   { href: "/brand", labelId: "Brand Kit", labelEn: "Brand Kit", icon: ShieldCheck },
   { href: "/templates", labelId: "Arsip & Template", labelEn: "Saved & Templates", icon: Layers },
-  { href: "/usage", labelId: "Kuota & Billing", labelEn: "Usage & Billing", icon: BarChart3 },
+  { href: "/pricing", labelId: "Langganan & Kuota", labelEn: "Plans & Usage", icon: BarChart3 },
   { href: "/leads", labelId: "Kontak Prospek", labelEn: "Leads CRM", icon: Users },
   { href: "/knowledge", labelId: "Basis Pengetahuan", labelEn: "Knowledge Base", icon: BookOpen },
   { href: "/settings", labelId: "Pengaturan", labelEn: "Settings", icon: Settings },
@@ -53,7 +55,10 @@ const MODULE_NAV = [
 
 export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProps) {
   const pathname = usePathname();
-  const { agent, usage, locale, setLocale, theme, setTheme } = useAgentStore();
+  const { agent, locale, setLocale, theme, setTheme } = useAgentStore();
+  const billing = useBilling();
+  const chatUsed = billing.usage?.chat ?? 0;
+  const chatLimit = billing.limits?.chat ?? PLANS[billing.planId].quotas.chat;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Handle ESC key for mobile drawer
@@ -160,20 +165,24 @@ export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProp
               <Milestone className="w-3.5 h-3.5 text-[var(--accent)]" />
               <span className="font-semibold">{locale === "id" ? "Peta Jalan" : "Roadmap"}</span>
             </div>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">11 Fase</span>
+            <span className="text-[10px] text-[var(--muted)] font-bold">Status fitur</span>
           </Link>
 
           <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
-              <span>{locale === "id" ? "Kuota AI" : "AI Quota"}</span>
+              <span>
+                {billing.mode === "live"
+                  ? `${PLANS[billing.planId].name} · ${locale === "id" ? "pesan AI" : "AI messages"}`
+                  : locale === "id" ? "Mode demo" : "Demo mode"}
+              </span>
               <span className="tabular-nums font-mono font-bold text-[var(--text)]">
-                {usage.aiRequestsUsed} / {usage.aiRequestsLimit}
+                {billing.mode === "live" ? `${chatUsed} / ${chatLimit}` : "–"}
               </span>
             </div>
             <div className="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden">
               <div
                 className="bg-[var(--accent)] h-full rounded-full"
-                style={{ width: `${(usage.aiRequestsUsed / usage.aiRequestsLimit) * 100}%` }}
+                style={{ width: `${billing.mode === "live" && chatLimit > 0 ? Math.min(100, (chatUsed / chatLimit) * 100) : 0}%` }}
               />
             </div>
           </div>
@@ -333,7 +342,7 @@ export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProp
                   <Milestone className="w-3.5 h-3.5 text-[var(--accent)]" />
                   Roadmap
                 </span>
-                <span className="text-emerald-600 text-[11px]">Phase 0–10</span>
+                <span className="text-[var(--muted)] text-[11px]">Status fitur</span>
               </Link>
             </div>
           </div>
