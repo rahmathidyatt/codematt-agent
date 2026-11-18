@@ -22,8 +22,8 @@ const FEATURES = [
   },
   {
     icon: Crop,
-    title: "Resize sekali klik",
-    body: "Ukuran siap pakai untuk portal listing, Instagram, dan WhatsApp. Tidak memakai kuota.",
+    title: "Ukuran file & HD",
+    body: "Perkecil file sampai di bawah 200 KB, ubah dimensi untuk portal dan Instagram, atau perjelas foto yang buram.",
   },
   {
     icon: FileText,

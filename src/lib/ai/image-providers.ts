@@ -115,3 +115,31 @@ export async function detectSensitiveText(input: {
   if (!result) throw new ProviderError("PROVIDER_FAILED");
   return parseGeminiBoxes(result.text ?? "", input.width, input.height);
 }
+
+/**
+ * "HD with AI": asks Gemini to redraw the same photo sharper and cleaner.
+ * The browser then scales the result to the requested size. Generative
+ * models can alter small details, so the UI tells the agent to compare.
+ */
+export async function enhanceImage(input: { image: Blob; mimeType: string }): Promise<{ base64: string; mimeType: string; model: string }> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new ProviderError("PROVIDER_NOT_CONFIGURED");
+  const model = imageModelFor("google");
+  const ai = new GoogleGenAI({ apiKey: key });
+  const data = Buffer.from(await input.image.arrayBuffer()).toString("base64");
+  const prompt = [
+    "Perjelas foto properti ini agar terlihat tajam dan berkualitas tinggi (HD).",
+    "Kurangi blur, noise, dan efek kompresi; perbaiki ketajaman tepi dan tekstur.",
+    "Pertahankan isi foto persis sama: bangunan, ruangan, warna, pencahayaan, sudut kamera, dan semua objek.",
+    "Jangan menambah, menghapus, atau memindahkan objek. Jangan menambahkan teks atau watermark.",
+  ].join(" ");
+  const result = await withTimeout(ai.models.generateContent({
+    model,
+    contents: [{ role: "user", parts: [{ inlineData: { mimeType: input.mimeType, data } }, { text: prompt }] }],
+    config: { responseModalities: ["IMAGE"] },
+  }), TIMEOUT_MS).then((r) => r, () => null);
+  if (!result) throw new ProviderError("PROVIDER_FAILED");
+  const parsed = readGeminiImage(result);
+  if (!parsed) throw new ProviderError("PROVIDER_REFUSED");
+  return { ...parsed, model };
+}

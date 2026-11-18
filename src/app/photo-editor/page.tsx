@@ -39,7 +39,7 @@ import {
   applySmartInpaint,
   getDirectiveMethodLabel,
 } from "@/features/photo-editor/photo-utils";
-import { RESIZE_PRESETS, padRegion, planResize } from "@/features/photo-editor/resize";
+import { padRegion } from "@/features/photo-editor/resize";
 import type { DetectedBox } from "@/lib/ai/provider-parsers";
 import { PLANS } from "@/config/plans";
 import { errorMessage, newIdempotencyKey, useBilling } from "@/lib/billing/use-billing";
@@ -292,7 +292,6 @@ export default function PropertyPhotoEditorPage() {
   const [aiProvider, setAiProvider] = useState<AiProvider>("google");
   const [aiBusy, setAiBusy] = useState<null | "edit" | "detect">(null);
   const [detectedBoxes, setDetectedBoxes] = useState<DetectedBox[]>([]);
-  const [resizePresetId, setResizePresetId] = useState<string>(RESIZE_PRESETS[0].id);
 
   const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -550,33 +549,6 @@ export default function PropertyPhotoEditorPage() {
     }
   };
 
-  const handleResizeDownload = async () => {
-    const canvas = activeCanvasRef.current;
-    const preset = RESIZE_PRESETS.find((p) => p.id === resizePresetId);
-    if (!canvas || !preset) return;
-    const plan = planResize(canvas.width, canvas.height, preset);
-    const out = document.createElement("canvas");
-    out.width = plan.outWidth;
-    out.height = plan.outHeight;
-    const octx = out.getContext("2d");
-    if (!octx) return;
-    octx.imageSmoothingEnabled = true;
-    octx.imageSmoothingQuality = "high";
-    if (preset.format === "image/jpeg") {
-      octx.fillStyle = "#fff";
-      octx.fillRect(0, 0, out.width, out.height);
-    }
-    octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, plan.outWidth, plan.outHeight);
-    const blob = await canvasToBlob(out, preset.format, preset.quality);
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Brighton-${preset.id}-${plan.outWidth}x${plan.outHeight}.${preset.format === "image/png" ? "png" : "jpg"}`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 2_000);
-    showToast(`Foto ${plan.outWidth}×${plan.outHeight} (${Math.round(blob.size / 1024)} KB) diunduh.`);
-  };
 
   // Apply the directive with strict pixel adherence
   const handleExecuteDirective = () => {
@@ -1156,35 +1128,19 @@ export default function PropertyPhotoEditorPage() {
             </div>
           </div>
 
-          {/* Resize & compress (free, runs in the browser) */}
-          <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
-            <h3 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
-              <Crop className="w-4 h-4 text-[var(--accent-text)]" />
-              <span>Resize &amp; Kompres</span>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">Gratis · tanpa AI</span>
-            </h3>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={resizePresetId}
-                onChange={(e) => setResizePresetId(e.target.value)}
-                className="flex-1 px-3 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[13px] text-[var(--text)]"
-                aria-label="Ukuran tujuan"
-              >
-                {RESIZE_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
-              <button
-                type="button"
-                onClick={handleResizeDownload}
-                className="px-4 py-2.5 rounded-xl bg-[var(--accent)] text-neutral-950 text-[13px] font-black flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Unduh ukuran ini</span>
-              </button>
-            </div>
-            <p className="text-[13px] text-[var(--muted)]">
-              Format persegi/portrait dipotong dari tengah. &ldquo;WhatsApp hemat&rdquo; hanya mengecilkan tanpa memotong. Hasil edit di atas ikut terbawa.
-            </p>
-          </div>
+          <Link
+            href="/photo-tools"
+            className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] flex items-center justify-between gap-3"
+          >
+            <span className="flex items-center gap-3">
+              <Crop className="w-5 h-5 text-[var(--accent-text)]" />
+              <span>
+                <span className="font-bold block text-sm">Ukuran &amp; HD</span>
+                <span className="text-[13px] text-[var(--muted)]">Perkecil ukuran file, ubah dimensi, atau perjelas foto.</span>
+              </span>
+            </span>
+            <ArrowRight className="w-4 h-4 text-[var(--muted)]" />
+          </Link>
 
           {/* Applied Directives Audit Trail Table */}
           <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-4">

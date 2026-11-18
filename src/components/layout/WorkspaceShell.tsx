@@ -21,6 +21,7 @@ import {
   Laptop,
   ShieldCheck,
   Wand2,
+  Crop,
   type LucideIcon,
 } from "lucide-react";
 import { useAgentStore } from "@/lib/store";
@@ -47,6 +48,7 @@ const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
     label: "Foto & Flyer",
     items: [
       { href: "/photo-editor", label: "Edit Foto", icon: Wand2 },
+      { href: "/photo-tools", label: "Ukuran & HD", icon: Crop },
       { href: "/flyer", label: "Pembuat Flyer", icon: Palette },
       { href: "/brand", label: "Identitas Brand", icon: ShieldCheck },
     ],
