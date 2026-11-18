@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Sparkles,
   CheckCircle2,
-  History,
   FileImage,
   Trash2,
   Bookmark,
