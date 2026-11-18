@@ -7,7 +7,6 @@ import {
   Undo2,
   RotateCcw,
   Download,
-  ShieldCheck,
   CheckCircle2,
   Sparkles,
   Eye,
@@ -38,7 +37,6 @@ import {
   applyPixelate,
   applyBlur,
   applySmartInpaint,
-  formatRegionCoordinates,
   getDirectiveMethodLabel,
 } from "@/features/photo-editor/photo-utils";
 import { RESIZE_PRESETS, padRegion, planResize } from "@/features/photo-editor/resize";
@@ -726,7 +724,7 @@ export default function PropertyPhotoEditorPage() {
       title={locale === "id" ? "Editor Foto Properti" : "Property Photo Editor"}
       subtitle={
         locale === "id"
-          ? "Pengeditan foto terarah: sensor nomor rumah, plat nomor polisi, & nomor kontak"
+          ? "Hapus nomor rumah, plat kendaraan, dan nomor kontak dari foto"
           : "Directive-guided photo editing: redact house numbers, license plates, & contact details"
       }
     >
@@ -741,27 +739,13 @@ export default function PropertyPhotoEditorPage() {
         </div>
       )}
 
-      {/* Top Brighton Brand & Assurance Banner */}
-      <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-neutral-950 flex items-center justify-center font-black text-lg shrink-0 shadow-xs">
-            B.
-          </div>
-          <div>
-            <h1 className="text-sm font-black uppercase tracking-tight text-[var(--text)] flex items-center gap-2">
-              <span>Brighton Photo Clean Studio</span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-amber-800 dark:text-amber-300">
-                100% Pixel Preserved
-              </span>
-            </h1>
-            <p className="text-xs text-[var(--muted)]">
-              {locale === "id"
-                ? "Dikhususkan untuk agen Brighton Real Estate: Menghapus elemen privat secara ketat mengikuti instruksi tanpa mengubah sisa foto asli."
-                : "Strictly executes privacy directives while preserving 100% of the original photo pixels outside the directive mask."}
-            </p>
-          </div>
-        </div>
-
+      {/* Upload */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p className="text-sm text-[var(--muted)]">
+          {locale === "id"
+            ? "Unggah foto, tandai area yang ingin dibersihkan, lalu unduh hasilnya."
+            : "Upload a photo, mark the area to clean, then download the result."}
+        </p>
         {/* Action CTAs: Upload custom photo */}
         <div className="flex items-center gap-2">
           <label className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] text-xs font-bold text-[var(--text)] flex items-center gap-2 transition-colors cursor-pointer shadow-xs">
@@ -785,20 +769,12 @@ export default function PropertyPhotoEditorPage() {
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
               <h2 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
                 <Wand2 className="w-4 h-4 text-[var(--accent)]" />
-                <span>{locale === "id" ? "Pilih Arahan Instruksi" : "Select Directives"}</span>
+                <span>{locale === "id" ? "Apa yang ingin dihapus?" : "What to remove?"}</span>
               </h2>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--muted)]">
-                Instruksi Terpandu
-              </span>
             </div>
 
             {/* Directive Preset Pills */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--text)] block">
-                {locale === "id"
-                  ? "Instruksi Standar Agen Brighton:"
-                  : "Brighton Standard Directives:"}
-              </label>
               <div className="grid grid-cols-1 gap-2 text-xs">
                 {PRESET_DIRECTIVES.map((d) => {
                   const isSelected = selectedDirectiveType === d.type;
@@ -832,15 +808,6 @@ export default function PropertyPhotoEditorPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-xs">{d.title}</span>
-                          <span
-                            className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                              isSelected
-                                ? "bg-black/20 text-neutral-950"
-                                : "bg-[var(--surface)] text-[var(--muted)]"
-                            }`}
-                          >
-                            {d.badge}
-                          </span>
                         </div>
                         <p
                           className={`text-[11px] mt-0.5 leading-relaxed ${
@@ -859,10 +826,7 @@ export default function PropertyPhotoEditorPage() {
             {/* Detailed Text Instruction Input */}
             <div className="space-y-2 pt-2 border-t border-[var(--border)]">
               <label className="text-xs font-bold text-[var(--text)] flex items-center justify-between">
-                <span>{locale === "id" ? "Spesifikasi Instruksi *" : "Directive Details *"}</span>
-                <span className="text-[10px] text-[var(--muted)] font-normal">
-                  Ketetapan area & tekstur
-                </span>
+                <span>{locale === "id" ? "Catatan untuk AI" : "Notes for AI"}</span>
               </label>
               <textarea
                 rows={3}
@@ -882,7 +846,7 @@ export default function PropertyPhotoEditorPage() {
             {/* Redaction / Patch Method Selection */}
             <div className="space-y-2 pt-2 border-t border-[var(--border)]">
               <label className="text-xs font-bold text-[var(--text)] block">
-                {locale === "id" ? "Metode Penyamaran / Sensor:" : "Redaction Technique:"}
+                {locale === "id" ? "Cara menghapus" : "Method"}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 {(
@@ -990,16 +954,6 @@ export default function PropertyPhotoEditorPage() {
               </p>
             </div>
 
-            {/* Target Coordinate Indicator */}
-            <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-xs flex items-center justify-between">
-              <span className="text-[var(--muted)] text-[11px]">Koordinat Target Terpilih:</span>
-              <span className="font-mono font-bold text-[var(--text)]">
-                {targetRegion
-                  ? formatRegionCoordinates(targetRegion)
-                  : "Belum Ditandai"}
-              </span>
-            </div>
-
             {/* Execute Directive Button */}
             <button
               type="button"
@@ -1012,7 +966,7 @@ export default function PropertyPhotoEditorPage() {
                 {aiBusy === "edit"
                   ? "AI sedang memproses..."
                   : locale === "id"
-                    ? "Jalankan Instruksi (Terapkan Edit)"
+                    ? "Terapkan"
                     : "Execute Privacy Directive"}
               </span>
             </button>
@@ -1022,7 +976,7 @@ export default function PropertyPhotoEditorPage() {
           <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
             <h3 className="text-xs font-bold text-[var(--text)] flex items-center gap-2">
               <Building2 className="w-4 h-4 text-[var(--accent)]" />
-              <span>{locale === "id" ? "Coba Contoh Foto Properti:" : "Try Sample Photos:"}</span>
+              <span>{locale === "id" ? "Contoh foto" : "Sample photos"}</span>
             </h3>
             <div className="grid grid-cols-1 gap-2">
               {SAMPLE_PHOTOS.map((sample) => (
@@ -1105,13 +1059,10 @@ export default function PropertyPhotoEditorPage() {
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[var(--text)] font-medium">
                   {locale === "id"
-                    ? "💡 Klik dan drag pada kanvas untuk menentukan kotak area target yang ingin disensor."
+                    ? "Klik dan geser di foto untuk menandai area."
                     : "💡 Click and drag directly on the canvas to designate target redaction box."}
                 </span>
               </div>
-              <span className="text-[10px] text-[var(--muted)] font-mono">
-                {appliedDirectives.length} Arahan Diterapkan
-              </span>
             </div>
 
             {/* Canvas Viewport Container */}
@@ -1182,11 +1133,7 @@ export default function PropertyPhotoEditorPage() {
             </div>
 
             {/* Action Export Bar */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs text-[var(--muted)] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>100% Bagian Lain Foto Tidak Tersentuh & Utuh</span>
-              </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3">
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
@@ -1195,7 +1142,7 @@ export default function PropertyPhotoEditorPage() {
                   className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--bg)] text-xs font-bold text-[var(--text)] flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
                   <Download className="w-4 h-4 text-[var(--accent)]" />
-                  <span>Unduh Foto Bersih (PNG)</span>
+                  <span>Unduh PNG</span>
                 </button>
 
                 <Link
@@ -1246,22 +1193,18 @@ export default function PropertyPhotoEditorPage() {
                 <FileCheck className="w-4 h-4 text-[var(--accent)]" />
                 <h3 className="text-sm font-bold text-[var(--text)]">
                   {locale === "id"
-                    ? "Daftar Audit Arahan yang Diterapkan"
+                    ? "Riwayat edit"
                     : "Applied Directives Audit Log"}
                 </h3>
               </div>
               <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[var(--accent)]/15 text-amber-800 dark:text-amber-300">
-                {appliedDirectives.length} Eksekusi
+                {appliedDirectives.length}
               </span>
             </div>
 
             {appliedDirectives.length === 0 ? (
               <div className="py-6 text-center text-[var(--muted)] text-xs space-y-1">
-                <p>Belum ada instruksi yang diterapkan pada foto ini.</p>
-                <p className="text-[11px] text-[var(--muted)]">
-                  Pilih instruksi di panel kiri dan klik <strong>Jalankan Instruksi</strong> untuk
-                  mencatat riwayat audit.
-                </p>
+                <p>Belum ada edit pada foto ini.</p>
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -1284,7 +1227,7 @@ export default function PropertyPhotoEditorPage() {
                         &ldquo;{d.instruction}&rdquo;
                       </p>
                       <div className="text-[10px] text-[var(--muted)] font-mono pl-7">
-                        Area: {formatRegionCoordinates(d.region)} · Pukul {d.timestamp}
+                        Pukul {d.timestamp}
                       </div>
                     </div>
 

@@ -59,7 +59,7 @@ export default function DashboardPage() {
     {
       href: "/listing",
       title: "Listing Description Writer",
-      desc: "Otomasi draf listing 3 gaya (Emosional, Investor, Formal) dengan verifikasi fakta 100%.",
+      desc: "Draf listing 3 gaya: keluarga, investor, dan formal.",
       badge: "Fact Safeguard",
       icon: FileText,
     },
@@ -88,11 +88,11 @@ export default function DashboardPage() {
 
   return (
     <WorkspaceShell
-      title={locale === "id" ? "Dasbor Agen Properti" : "Property Agent Dashboard"}
+      title={locale === "id" ? "Dasbor" : "Dashboard"}
       subtitle={
         locale === "id"
-          ? `Selamat datang kembali, ${agent.name} (${agent.agency}) — pusat kendali pemasaran & prospek`
-          : `Welcome back, ${agent.name} (${agent.agency}) — marketing & lead command center`
+          ? `Halo, ${agent.name}`
+          : `Hello, ${agent.name}`
       }
     >
       <div className="space-y-8">

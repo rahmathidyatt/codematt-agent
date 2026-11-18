@@ -24,7 +24,6 @@ import {
   ExternalLink,
   Milestone,
   ShieldCheck,
-  ChevronRight,
   Wand2,
 } from "lucide-react";
 import { useAgentStore } from "@/lib/store";
@@ -203,20 +202,13 @@ export function WorkspaceShell({ children, title, subtitle }: WorkspaceShellProp
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-1.5 text-xs text-[var(--muted)] truncate">
-              <Link href="/dashboard" className="hover:text-[var(--text)] transition-colors">
-                Workspace
-              </Link>
-              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-semibold text-[var(--text)] truncate">
-                {locale === "id" ? currentModule.labelId : currentModule.labelEn}
-              </span>
+            {/* Page title (one heading per page; no breadcrumb separators) */}
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold text-[var(--text)] truncate">
+                {title || (locale === "id" ? currentModule.labelId : currentModule.labelEn)}
+              </h1>
               {subtitle && (
-                <>
-                  <span aria-hidden="true" className="text-[var(--border)]">|</span>
-                  <span className="hidden md:inline text-[var(--muted)] truncate">{subtitle}</span>
-                </>
+                <p className="hidden md:block text-[11px] text-[var(--muted)] truncate">{subtitle}</p>
               )}
             </div>
           </div>

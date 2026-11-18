@@ -183,7 +183,7 @@ export default function ListingWriterPage() {
   return (
     <WorkspaceShell
       title={locale === "id" ? "Listing Description Writer" : "Listing Description Writer"}
-      subtitle={locale === "id" ? "Otomasi draf listing 3 gaya dengan verifikasi fakta 100%" : "3-angle copy generation with 100% verified facts"}
+      subtitle={locale === "id" ? "Draf deskripsi 3 gaya dari data properti Anda" : "Three listing styles from your property data"}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Property Facts Input Form */}

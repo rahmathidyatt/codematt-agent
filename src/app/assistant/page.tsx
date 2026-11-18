@@ -78,7 +78,7 @@ export default function AssistantPage() {
   return (
     <WorkspaceShell
       title="AI Assistant"
-      subtitle="Satu tempat untuk bertanya ke Gemini, ChatGPT, atau Claude"
+      subtitle="Pesan klien, skrip negosiasi, dan penjelasan legalitas"
     >
       <div className="max-w-4xl mx-auto space-y-5">
         {billing.mode === "demo" && !billing.loading && (
@@ -152,7 +152,7 @@ export default function AssistantPage() {
           <div className="space-y-4 overflow-y-auto max-h-[520px] pr-1" aria-live="polite">
             {messages.length === 0 && (
               <p className="text-xs text-[var(--muted)]">
-                Halo {agent.name.split(" ")[0]}, pilih model di atas lalu tanyakan apa saja soal listing, negosiasi, atau follow-up klien.
+                Halo {agent.name.split(" ")[0]}, ada yang bisa dibantu?
               </p>
             )}
             {messages.map((m) => (

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Check, CreditCard, Loader2 } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
-import { PLAN_ORDER, PLANS, PROVIDER_LABELS, formatRupiah, type PlanId } from "@/config/plans";
+import { PLAN_ORDER, PLANS, formatRupiah, type PlanId } from "@/config/plans";
 import { errorMessage, useBilling } from "@/lib/billing/use-billing";
 
 export default function PricingPage() {
@@ -37,7 +37,7 @@ export default function PricingPage() {
   const canCheckout = billing.flags.checkout && billing.mode === "live";
 
   return (
-    <WorkspaceShell title="Langganan" subtitle="Pilih paket sesuai kebutuhan. Bayar per 30 hari, tanpa potong otomatis.">
+    <WorkspaceShell title="Langganan" subtitle="Tanpa kontrak dan tanpa potong otomatis.">
       <div className="max-w-5xl mx-auto space-y-6">
         {billing.mode === "live" && (
           <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-xs flex flex-wrap gap-4 items-center">
@@ -86,9 +86,6 @@ export default function PricingPage() {
                   {plan.highlights.map((h) => (
                     <li key={h} className="flex gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-[var(--accent)] shrink-0" />{h}</li>
                   ))}
-                  <li className="flex gap-2 text-[var(--muted)]">
-                    <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" />Model: {plan.providers.map((p) => PROVIDER_LABELS[p]).join(", ")}
-                  </li>
                 </ul>
                 {plan.purchasable ? (
                   <button
@@ -111,8 +108,8 @@ export default function PricingPage() {
         </div>
 
         <div className="text-[11px] text-[var(--muted)] space-y-1">
-          <p>Pembayaran diproses Midtrans (QRIS, transfer VA, e-wallet, kartu). Paket aktif otomatis setelah Midtrans mengonfirmasi pembayaran.</p>
-          <p>Kuota direset setiap tanggal 1 (WIB). Gagal dari penyedia AI tidak memotong kuota. Resize foto gratis tanpa batas di semua paket.</p>
+          <p>Bayar dengan QRIS, virtual account, e-wallet, atau kartu. Paket langsung aktif setelah pembayaran diterima.</p>
+          <p>Kuota diisi ulang setiap tanggal 1.</p>
         </div>
       </div>
     </WorkspaceShell>
